@@ -302,10 +302,12 @@ main {
 .week-day[aria-current="date"] .week-day-initial { color: var(--ink-2); }
 
 /* Days that have not arrived yet stay in the grid for alignment but cannot be
-   opened — showing a future pick would end the daily mechanic. They are
-   deliberately faint and are inactive content, so they sit outside the body
-   contrast requirement; 0.6 keeps the number itself still readable. */
-.week-day[aria-disabled="true"] { color: var(--ink-3); opacity: 0.6; cursor: default; }
+   opened — showing a future pick would end the daily mechanic. WCAG exempts
+   inactive content from the 4.5:1 body-text bar, but not from being legible: this
+   opacity was solved as the lowest value that still gives the day number 3:1
+   against the panel in either theme, which measured 3.25 night and 3.16 paper. The
+   earlier 0.6 gave 2.54 and 2.41, which is a smudge rather than a disabled state. */
+.week-day[aria-disabled="true"] { color: var(--ink-3); opacity: 0.75; cursor: default; }
 .week-day[aria-disabled="true"] .week-day-initial { color: inherit; }
 
 .daybar-stats {
@@ -333,15 +335,16 @@ main {
 
 .field {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--s-3);
-  padding: 0 var(--s-4);
+  padding: 0 var(--s-3) 0 var(--s-4);
   min-height: 2.75rem;
   border: 1px solid var(--line);
   border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--ink-3);
+  transition: border-color var(--d-2) var(--e-out), color var(--d-2) var(--e-out);
 }
 .field svg { width: 1rem; height: 1rem; }
 .field input {
@@ -356,6 +359,24 @@ main {
 .field input::placeholder { color: var(--ink-3); }
 .field input:focus { outline: none; }
 .field:focus-within { border-color: var(--accent); color: var(--ink-2); }
+
+/* The browser's own clear control is suppressed because the field ships one that
+   matches the rest of the app; two ✕ in one row is a defect, and the native one
+   cannot be styled to the palette. */
+.field input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+
+.field-clear {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  color: var(--ink-3);
+  transition: color var(--d-2) var(--e-out), background-color var(--d-2) var(--e-out);
+}
+.field-clear svg { width: 0.875rem; height: 0.875rem; }
+.field-clear:hover { color: var(--ink); background: var(--bg-veil); }
+.field-clear[hidden] { display: none; }
 
 .tabs {
   display: flex;
@@ -376,7 +397,10 @@ main {
   transition: color var(--d-2) var(--e-out), background-color var(--d-2) var(--e-out);
 }
 .tab-btn:hover { color: var(--ink-2); }
-.tab-btn[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--sh-1); }
+/* The chosen tab is the only element in the app allowed a filled ground for
+   selection: it sits inside its own track, so the ground reads as the control's
+   state and not as a tint competing with the category colours below it. */
+.tab-btn[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--sh-1); }
 
 .filters {
   display: flex;
@@ -388,10 +412,26 @@ main {
   scrollbar-width: none;
 }
 .filters::-webkit-scrollbar { display: none; }
+/* Nine labels, each allowed to keep its full width, because a truncated category
+   name is not a name. The row scrolls instead. */
+.filters > * { flex: none; }
+/* The field chips are the most-tapped control in the app and were 26px tall —
+   inside WCAG's 24px floor for AA, but a small target for a thumb. They are grown
+   to 34px here rather than by the usual invisible ::after, because this row
+   scrolls: overflow-x: auto forces overflow-y to auto as well, which clips
+   anything reaching outside the container and silently defeats that trick.
+   Only chips inside this row grow; the ones on a topic page keep their size. */
+.filters .chip { min-height: 2.125rem; }
 
 .list { display: grid; gap: var(--s-3); }
+.list .empty { grid-column: 1 / -1; }
 
 .list-count {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+  flex-wrap: wrap;
   font-family: var(--font-num);
   font-size: var(--t-eyebrow);
   letter-spacing: 0.04em;
@@ -411,6 +451,10 @@ main {
 }
 
 .shuffle .filters { justify-content: flex-start; }
+/* The count line became a flex row so its reset button could sit at the far end,
+   which would otherwise drag the shuffle screen's single centred caption to the
+   left: one anonymous flex item at space-between goes to the start. */
+.shuffle .list-count { justify-content: center; }
 
 /* ------------------------------------------------------------ empty state -- */
 .empty {
@@ -423,6 +467,9 @@ main {
 }
 .empty h3 { font-size: var(--t-title); }
 .empty p { font-size: var(--t-sm); color: var(--ink-3); }
+/* Centred rather than stretched to the full measure: a wide amber-looking
+   rectangle would outrank the sentence that explains it. */
+.empty > .btn { justify-self: center; margin-top: var(--s-3); }
 
 /* ------------------------------------------------------------ note boxes --
    Both are children of body, outside main's padding, so they carry their own

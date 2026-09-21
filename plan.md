@@ -57,11 +57,25 @@ can be revisited.
 
 ## M4 · Library browsing
 
-- [ ] Search across titles, categories and summaries
-- [ ] Category filters
-- [ ] All / Unread / Learnt / Starred tabs
-- [ ] Progress count and bar across the whole set
-- [ ] Empty states for tabs with nothing in them
+- [x] Search across titles, categories and summaries
+- [x] Category filters
+- [x] All / Unread / Learnt / Starred tabs
+- [x] Progress count and bar across the whole set
+- [x] Empty states for tabs with nothing in them
+
+The index keeps its own copy rather than being rebuilt on every change, so typing
+holds focus and a trip into a topic and back returns you to the same row. The tab
+and field you pick are part of the address — `#/library/starred/history` is a view
+you can return to — while the search text deliberately is not, because twelve
+keystrokes would write twelve back-steps through half-typed words. Search splits a
+query into words instead of matching it whole, so "dunning kruger" finds a title
+written with an en dash and "sevres" finds Sèvres. Each empty state names the
+filters that produced it and offers the one action that undoes it.
+
+Found while checking: the unreachable future days were legible only as a smudge
+(2.4–2.5:1), now solved to clear 3:1 in both themes; and the field chips, the most
+tapped control in the app, were 26px tall — inside the AA minimum but small for a
+thumb — so they are 34px.
 
 **Done when:** every filter and tab narrows the list correctly against the
 sample data.
@@ -126,3 +140,7 @@ Yours to ask for. Not automatic.
   desktop keep separate records, and clearing browser data resets it.
 - M1 is the design checkpoint. The look is settled there, and nothing
   downstream is built until you approve it.
+- `tests/` is for checking the app, not running it: nothing in `index.html`
+  refers to it. `node tests/search-logic.js` exercises the index's search and
+  filters against the real content; `tests/contrast-in-page.js` is loaded into
+  the open page to measure every colour pairing in both themes.
