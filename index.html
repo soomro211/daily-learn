@@ -68,6 +68,9 @@
   <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M15 5.5 8.5 12l6.5 6.5"/>
   </symbol>
+  <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 5.5 15.5 12 9 18.5"/>
+  </symbol>
   <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
     <circle cx="12" cy="12" r="9"/><path d="M12 11.2v5M12 7.8h.01"/>
   </symbol>
@@ -85,7 +88,7 @@
 </header>
 
 <main id="main">
-  <section class="screen" id="screen-today"   aria-labelledby="today-h" hidden></section>
+  <section class="screen" id="screen-day"    aria-labelledby="day-h" hidden></section>
   <section class="screen" id="screen-library" aria-labelledby="library-h" hidden></section>
   <section class="screen" id="screen-topic"   aria-labelledby="topic-h" hidden></section>
   <section class="screen" id="screen-shuffle" aria-labelledby="shuffle-h" hidden></section>
@@ -93,9 +96,10 @@
 
 <p class="prototype-note" id="prototype-note">
   <svg aria-hidden="true"><use href="#i-info"/></svg>
-  <span><strong>M2 — the topic page.</strong> Reading view, marking and starring are
-    finished, and marks now survive a reload. Search, filters, the status tabs and
-    the shuffle roll are still drawn rather than wired; they arrive in M4 and M5.</span>
+  <span><strong>M3 — the daily thread.</strong> One topic a day, and you can step back
+    through earlier days by day or by week; the streak counts consecutive days on
+    which you marked something. Search, filters and the shuffle roll are still drawn
+    rather than wired; they arrive in M4 and M5.</span>
   <button type="button" id="prototype-note-close">Dismiss</button>
 </p>
 

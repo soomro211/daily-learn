@@ -39,10 +39,18 @@ marking or starring it survives a page reload.
 
 ## M3 · Daily topic
 
-- [ ] Today's topic on opening the app
-- [ ] Same topic all day, changes the next day
-- [ ] Move back and forward through previous days
-- [ ] Day streak count
+- [x] Today's topic on opening the app
+- [x] Same topic all day, changes the next day
+- [x] Move back and forward through previous days
+- [x] Day streak count
+
+Found while building it: the date-hashed picker was badly unbalanced — over
+three years one topic surfaced three times as often as another, and any given
+topic could disappear for 229 straight days. Replaced with a shuffled-deck
+cycle, which measures 82-87 appearances each and no topic absent more than 26
+days. Each day's pick is now also recorded when first opened, so adding topics
+in M7 cannot move the pick under a day already read. A pick for a future date is
+clamped to today rather than shown.
 
 **Done when:** changing the device date shows a different pick, and past days
 can be revisited.

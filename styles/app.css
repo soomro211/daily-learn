@@ -181,38 +181,151 @@ main {
 .related { display: grid; gap: var(--s-3); }
 .related-list { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 
-/* ---------------------------------------------------------- today view -- */
-.today { display: grid; gap: var(--s-6); }
+/* ------------------------------------------------------------ day view -- */
+.day { display: grid; gap: var(--s-6); }
 
-.today-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-4);
-  flex-wrap: wrap;
-  padding: var(--s-4);
+/* Three rows of navigation above a topic is already a lot on a phone, so the
+   box is kept as tight as the tap targets allow. */
+.daybar {
+  display: grid;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4) var(--s-2);
   border: 1px solid var(--line-soft);
   border-radius: var(--r-3);
   background: var(--surface);
 }
 
-.strip-stat { display: grid; gap: 0.125rem; }
+.daybar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
 
-.strip-value {
-  font-family: var(--font-num);
-  font-size: var(--t-title);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
+.daybar-when { display: grid; gap: 0.125rem; min-width: 0; }
+
+.daybar-when strong {
+  font-family: var(--font-read);
+  font-size: var(--t-ui);
+  font-weight: 600;
+  line-height: 1.25;
   color: var(--ink);
 }
-.strip-value small { font-size: 0.62em; color: var(--ink-3); }
 
-.strip-label {
+.daybar-when span {
   font-size: var(--t-eyebrow);
   letter-spacing: var(--track-eyebrow);
   text-transform: uppercase;
   color: var(--ink-3);
+}
+
+/* Two separate step controls, deliberately not merged: the arrows beside the
+   date move a single day, the arrows around the strip move a week. */
+.daynav { display: flex; gap: var(--s-1); flex: none; }
+
+.nav-btn {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--ink-2);
+  background: var(--bg-veil);
+  text-decoration: none;
+  transition: color var(--d-2) var(--e-out), border-color var(--d-2) var(--e-out);
+}
+.nav-btn svg { width: 0.875rem; height: 0.875rem; }
+.nav-btn:hover:not([aria-disabled="true"]) { color: var(--accent); border-color: var(--accent); }
+.nav-btn[aria-disabled="true"] { opacity: 0.34; cursor: default; }
+
+/* A whole week has to fit between two arrows on a phone, which leaves each day
+   about 34px wide — under the comfortable 44px. Accepted deliberately: the
+   strip is a jump control, and the day-by-day path is the full-size arrows
+   above it, so the tight targets are never the only way to move. */
+.week-strip {
+  display: grid;
+  grid-template-columns: auto repeat(7, 1fr) auto;
+  align-items: center;
+  gap: 0.1875rem;
+}
+.week-strip .nav-btn { width: 2.125rem; height: 2.125rem; }
+.week-strip .nav-btn svg { width: 0.75rem; height: 0.75rem; }
+
+/* A whole week across a phone is narrow, so the day number carries the tap
+   target and the initial above it only orients the eye. */
+.week-day {
+  display: grid;
+  justify-items: center;
+  gap: 0.125rem;
+  min-height: 2.75rem;
+  padding: 0.25rem 0;
+  border-radius: var(--r-2);
+  text-decoration: none;
+  color: var(--ink-2);
+  transition: background-color var(--d-2) var(--e-out);
+}
+.week-day:hover:not([aria-disabled="true"]) { background: var(--bg-veil); }
+
+.week-day-initial {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.week-day-number {
+  font-family: var(--font-num);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+/* Activity is a filled dot *and* a heavier number, never colour alone. */
+.week-day-mark {
+  width: 0.25rem;
+  height: 0.25rem;
+  border-radius: 50%;
+  background: var(--accent);
+  visibility: hidden;
+}
+.week-day[data-activity="true"] .week-day-mark { visibility: visible; }
+.week-day[data-activity="true"] .week-day-number { color: var(--ink); font-weight: 600; }
+
+/* Selection is a ring and a heavier number rather than a tinted ground: a fill
+   here would have to be dark enough to read as a ground, and ink-3 on top of it
+   measured 3.9:1 in the night theme. The ring costs no contrast anywhere. */
+.week-day[aria-current="date"] {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.week-day[aria-current="date"] .week-day-number { color: var(--ink); font-weight: 600; }
+.week-day[aria-current="date"] .week-day-initial { color: var(--ink-2); }
+
+/* Days that have not arrived yet stay in the grid for alignment but cannot be
+   opened — showing a future pick would end the daily mechanic. They are
+   deliberately faint and are inactive content, so they sit outside the body
+   contrast requirement; 0.6 keeps the number itself still readable. */
+.week-day[aria-disabled="true"] { color: var(--ink-3); opacity: 0.6; cursor: default; }
+.week-day[aria-disabled="true"] .week-day-initial { color: inherit; }
+
+.daybar-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem var(--s-3);
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--line-soft);
+  font-family: var(--font-num);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+.daybar-stats strong { color: var(--ink-2); font-weight: 500; }
+.daybar-stats .stat-lead {
+  font-family: var(--font-ui);
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 /* -------------------------------------------------------- library view -- */
