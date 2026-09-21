@@ -53,7 +53,10 @@
   <symbol id="i-arrow-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/>
   </symbol>
-  <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+  <!-- No fill attribute here, unlike the other icons: the star is the one glyph
+       that has to be fillable, and a fill="none" presentation attribute on the
+       symbol would override any fill set from CSS. -->
+  <symbol id="i-star" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
     <path d="m12 3.6 2.65 5.37 5.93.86-4.29 4.18 1.01 5.91L12 17.02l-5.3 2.9 1.01-5.91L3.42 9.83l5.93-.86Z"/>
   </symbol>
   <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
@@ -61,6 +64,9 @@
   </symbol>
   <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
     <circle cx="11" cy="11" r="6.8"/><path d="M20.5 20.5 16 16"/>
+  </symbol>
+  <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 5.5 8.5 12l6.5 6.5"/>
   </symbol>
   <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
     <circle cx="12" cy="12" r="9"/><path d="M12 11.2v5M12 7.8h.01"/>
@@ -87,10 +93,16 @@
 
 <p class="prototype-note" id="prototype-note">
   <svg aria-hidden="true"><use href="#i-info"/></svg>
-  <span><strong>M1 — look and structure.</strong> Navigation, the theme and today's pick
-    all work. Marking and starring work for this session only so you can judge their
-    states; they persist from M2. Search, filters and the shuffle roll are drawn, not wired.</span>
+  <span><strong>M2 — the topic page.</strong> Reading view, marking and starring are
+    finished, and marks now survive a reload. Search, filters, the status tabs and
+    the shuffle roll are still drawn rather than wired; they arrive in M4 and M5.</span>
   <button type="button" id="prototype-note-close">Dismiss</button>
+</p>
+
+<p class="storage-note" id="storage-note" hidden>
+  <svg aria-hidden="true"><use href="#i-info"/></svg>
+  <span>This browser is blocking stored data, so marks will disappear when the tab
+    closes. Everything else works as normal.</span>
 </p>
 
 <footer class="site-foot">

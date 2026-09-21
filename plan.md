@@ -21,10 +21,18 @@ before any further screens are built on top of it.
 
 ## M2 · Topic page
 
-- [ ] Reading view for one topic
-- [ ] Summary, key points, misconception, source link
-- [ ] Related-topic chips that navigate between topics
-- [ ] Mark-as-learnt and star actions
+- [x] Reading view for one topic
+- [x] Summary, key points, misconception, source link
+- [x] Related-topic chips that navigate between topics
+- [x] Mark-as-learnt and star actions
+
+Done alongside the above, from reviewing the M1 build: marks are stored with the
+date they were made, which is what the M3 streak reads; marking no longer
+rebuilds the page, which had been throwing away the reader's scroll position and
+replaying the entrance animation; a back link and a single category label
+replaced a duplicated one; prose holds to one measure; focus moves with a route
+change; and the light palette was corrected where equal HSL lightness turned out
+to mean unequal luminance across the eight category hues.
 
 **Done when:** a topic opens from the library, reads well on a phone, and
 marking or starring it survives a page reload.

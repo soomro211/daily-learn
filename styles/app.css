@@ -69,6 +69,11 @@ main {
   animation: enter var(--d-3) var(--e-out) both;
 }
 
+/* Screens receive focus programmatically after a route change so a screen
+   reader lands on the new heading. That is not a user-initiated focus, so it
+   must not draw a ring. */
+.screen:focus { outline: none; }
+
 @keyframes enter {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: none; }
@@ -87,7 +92,8 @@ main {
   grid-template-columns: repeat(3, 1fr);
   gap: var(--s-1);
   padding: var(--s-2) var(--page-pad) calc(var(--s-2) + env(safe-area-inset-bottom));
-  background: color-mix(in oklab, var(--bg) 88%, transparent);
+  background: var(--bg-float);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
   backdrop-filter: blur(14px) saturate(1.2);
   border-top: 1px solid var(--line-soft);
 }
@@ -114,6 +120,14 @@ main {
 .topic { display: grid; gap: var(--s-5); }
 
 .topic-head { display: grid; gap: var(--s-3); }
+
+/* Everything that is prose holds to the same measure. Without this the points
+   and caveat run wider than the summary and the column visibly breaks apart on
+   a tablet or desktop. */
+.standfirst,
+.blocks,
+.source-row,
+.related { max-width: var(--measure); }
 
 .topic-title {
   font-size: var(--t-display);
@@ -153,6 +167,8 @@ main {
 .blocks { display: grid; gap: var(--s-5); }
 
 .source-row { display: grid; gap: var(--s-3); }
+
+.action-block { display: grid; gap: var(--s-3); }
 
 .topic-actions {
   display: flex;
@@ -295,13 +311,23 @@ main {
 .empty h3 { font-size: var(--t-title); }
 .empty p { font-size: var(--t-sm); color: var(--ink-3); }
 
-/* --------------------------------------------------------- prototype note -- */
+/* ------------------------------------------------------------ note boxes --
+   Both are children of body, outside main's padding, so they carry their own
+   gutter. Without it the border sits flush against the screen edge on a phone.
+   */
+.prototype-note,
+.storage-note {
+  width: calc(100% - (var(--page-pad) * 2));
+  max-width: var(--page-max);
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .prototype-note {
   display: flex;
   align-items: center;
   gap: var(--s-3);
-  max-width: var(--page-max);
-  margin: var(--s-7) auto 0;
+  margin-top: var(--s-7);
   padding: var(--s-3) var(--s-4);
   border-radius: var(--r-2);
   border: 1px dashed var(--line);
@@ -312,6 +338,8 @@ main {
 .prototype-note svg { width: 0.9375rem; height: 0.9375rem; color: var(--accent); }
 .prototype-note strong { color: var(--ink-2); font-weight: 600; }
 .prototype-note button { margin-left: auto; color: var(--ink-3); font-size: var(--t-eyebrow); letter-spacing: 0.08em; text-transform: uppercase; }
+
+.storage-note { margin-top: var(--s-3); }
 
 footer.site-foot {
   max-width: var(--page-max);
@@ -347,6 +375,5 @@ footer.site-foot {
 
 @media (min-width: 68rem) {
   :root { --page-pad: 3rem; }
-  .masthead, main, .prototype-note { max-width: var(--list-max); }
-  .today { grid-template-columns: minmax(0, 1fr); }
+  .masthead, main, .prototype-note, .storage-note { max-width: var(--list-max); }
 }

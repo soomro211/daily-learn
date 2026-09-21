@@ -231,7 +231,10 @@ button.chip:active, a.chip:active { transform: scale(0.97); }
   background: var(--surface);
 }
 .btn-icon:hover { color: var(--ink); border-color: var(--ink-3); }
-.btn-icon svg { width: 1.125rem; height: 1.125rem; }
+/* The star has to be explicitly unfilled here: it is the one icon that can be
+   filled, so it carries no fill attribute of its own for the symbol to fall
+   back on. */
+.btn-icon svg { width: 1.125rem; height: 1.125rem; fill: none; }
 
 .btn-icon[aria-pressed="true"] {
   color: var(--accent);
@@ -307,11 +310,15 @@ button.chip:active, a.chip:active { transform: scale(0.97); }
 }
 
 /* Learnt and starred are both marks, but they must not look interchangeable:
-   learnt is a filled check in the category hue, starred an amber outline. */
+   learnt keeps the category hue and stays a drawn stroke, starred is a solid
+   amber shape. These only ever appear when active, so the star is filled — an
+   outline here would read as an available action rather than a record. */
 .marks { display: inline-flex; align-items: center; gap: var(--s-2); }
 .marks svg { width: 0.9375rem; height: 0.9375rem; }
 .mark-learnt { color: var(--cat, var(--ink-3)); }
+.mark-learnt svg { fill: none; }
 .mark-star { color: var(--accent); }
+.mark-star svg { fill: currentColor; }
 .marks [hidden] { display: none; }
 
 .card[data-learnt="true"] { background: var(--bg-veil); }
@@ -429,3 +436,63 @@ button.chip:active, a.chip:active { transform: scale(0.97); }
   padding: 0.05rem 0.3rem;
   background: var(--bg);
 }
+
+/* ------------------------------------------------------------------ back -- */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  align-self: start;
+  margin-left: -0.5rem;   /* widens the tap target without shifting the text */
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--r-2);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: color var(--d-2) var(--e-out), background-color var(--d-2) var(--e-out);
+}
+.back svg { width: 1rem; height: 1rem; transition: transform var(--d-2) var(--e-out); }
+.back:hover { color: var(--ink); background: var(--bg-veil); }
+.back:hover svg { transform: translateX(-2px); }
+
+/* --------------------------------------------------------- marked status -- */
+/* Records the date a topic was marked, which is also what the day streak in
+   M3 will read from — hence a date rather than a boolean. */
+.marked-note {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: var(--font-num);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.03em;
+  color: var(--ink-3);
+}
+.marked-note svg { width: 0.8125rem; height: 0.8125rem; color: var(--cat, var(--accent)); }
+.marked-note[hidden] { display: none; }
+
+/* Motion carries the acknowledgement that a tap registered, so the button
+   label does not have to grow a confirmation the reader must re-read. */
+@keyframes mark-pop {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.btn svg[data-pop="true"] { animation: mark-pop var(--d-2) var(--e-out) both; }
+
+/* ---------------------------------------------------------- storage note -- */
+/* If localStorage is blocked the app still works, but marks die with the tab.
+   Saying so is better than letting them silently disappear. */
+.storage-note {
+  display: flex;
+  gap: var(--s-2);
+  align-items: flex-start;
+  margin-top: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.storage-note svg { width: 0.9375rem; height: 0.9375rem; color: var(--accent); margin-top: 0.15rem; }
+.storage-note[hidden] { display: none; }

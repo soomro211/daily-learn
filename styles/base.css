@@ -45,7 +45,7 @@ body::before {
 }
 
 /* Everything that is not the grain sits above it. */
-.masthead, main, .tabbar, .prototype-note { position: relative; z-index: 1; }
+.masthead, main, .tabbar, .prototype-note, .storage-note, .site-foot { position: relative; z-index: 1; }
 
 h1, h2, h3, h4 {
   font-family: var(--font-read);

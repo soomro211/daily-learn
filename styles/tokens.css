@@ -111,6 +111,11 @@ html[data-theme="dark"] {
   --sh-2: 0 18px 44px -20px hsl(0 0% 0% / 0.75);
   --sh-lift: 0 2px 4px hsl(0 0% 0% / 0.3), 0 18px 40px -22px hsl(0 0% 0% / 0.7);
 
+  /* Translucent ground under the floating tab bar. Written as an explicit
+     alpha rather than color-mix() so it resolves identically everywhere and can
+     be measured for contrast. */
+  --bg-float: hsl(32 14% 5.5% / 0.88);
+
   --grain-opacity: 0.05;
   --grain-blend: soft-light;
 
@@ -132,10 +137,11 @@ html[data-theme="light"] {
   --line-soft:    hsl(34 16% 89%);
 
   --ink:          hsl(28 22% 12%);
-  --ink-2:        hsl(28 11% 34%);
-  /* 42% rather than a lighter grey: --ink-3 carries 11-13px eyebrows, excerpts
-     and captions, so it has to clear 4.5:1 on paper, not merely look dimmer. */
-  --ink-3:        hsl(30 9% 42%);
+  /* --ink-2 is a shade darker than it otherwise would be so that the gap
+     between it and --ink-3 survives --ink-3 having to clear 4.5:1 on the
+     learnt card's greyed ground, which is the tightest surface in the app. */
+  --ink-2:        hsl(28 11% 32%);
+  --ink-3:        hsl(30 9% 41%);
 
   --accent:       hsl(28 74% 33%);
   --accent-strong:hsl(26 80% 28%);
@@ -147,6 +153,8 @@ html[data-theme="light"] {
   --sh-1: 0 1px 2px hsl(28 25% 30% / 0.08);
   --sh-2: 0 18px 40px -22px hsl(28 30% 25% / 0.22);
   --sh-lift: 0 1px 2px hsl(28 25% 30% / 0.07), 0 16px 32px -20px hsl(28 30% 25% / 0.18);
+
+  --bg-float: hsl(40 38% 95% / 0.9);
 
   --grain-opacity: 0.028;
   --grain-blend: multiply;
@@ -176,3 +184,19 @@ html[data-theme="light"] {
   --cat-wash: hsl(var(--cat-h) var(--cat-wash-s) var(--cat-wash-l));
   --cat-line: hsl(var(--cat-h) var(--cat-sat) var(--cat-lit) / 0.34);
 }
+
+/* Per-hue lightness, paper theme only.
+   Equal HSL lightness is not equal luminance: a green at 36% is far brighter
+   than a violet at 36%, so one shared value puts the greens under AA for body
+   text while leaving the blues washed out and needlessly dark. These numbers
+   were solved per hue for 4.6:1 against the chip's own tinted ground, which is
+   the tightest pairing a category colour has to survive. The night theme needs
+   no equivalent: light ink on a dark tint clears 5.8:1 at every hue. */
+html[data-theme="light"] [data-cat="psychology"]  { --cat-lit: 45%; }
+html[data-theme="light"] [data-cat="history"]      { --cat-lit: 39%; }
+html[data-theme="light"] [data-cat="physics"]      { --cat-lit: 30%; }
+html[data-theme="light"] [data-cat="biology"]      { --cat-lit: 31%; }
+html[data-theme="light"] [data-cat="economics"]    { --cat-lit: 32%; }
+html[data-theme="light"] [data-cat="philosophy"]   { --cat-lit: 45%; }
+html[data-theme="light"] [data-cat="engineering"]  { --cat-lit: 45%; }
+html[data-theme="light"] [data-cat="ideas"]        { --cat-lit: 30%; }
