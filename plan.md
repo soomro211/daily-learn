@@ -5,14 +5,19 @@ project memory; this file is the task list only.
 
 ## M1 · Shell and look
 
-- [ ] Project files and page structure
-- [ ] Colour scheme, type scale, spacing — shared across the app
-- [ ] Dark/light toggle, remembered between visits
-- [ ] App navigation for mobile-first use
-- [ ] 8 sample topics so the app has something real to show
+- [x] Project files and page structure
+- [x] Colour scheme, type scale, spacing — shared across the app
+- [x] Dark/light toggle, remembered between visits
+- [x] App navigation for mobile-first use
+- [x] 8 sample topics so the app has something real to show
+
+Shipped 13 samples instead of 8, so every category colour is visible and the
+index is not nearly empty.
 
 **Done when:** the sample build opens in the browser and the look is approved
 before any further screens are built on top of it.
+
+*Built; the gate is still your approval of the look.*
 
 ## M2 · Topic page
 
