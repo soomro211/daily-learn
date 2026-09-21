@@ -1,0 +1,431 @@
+/* ==========================================================================
+   daily-learn — components
+
+   Small, composable pieces. Anything here must look right at phone width
+   first and only then at desk width.
+   ========================================================================== */
+
+/* ------------------------------------------------------------- eyebrow -- */
+/* The uppercase kicker above a heading. Used once per screen, never twice in
+   a row, or it stops meaning "this is a new section". */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.eyebrow-mark {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.eyebrow-cat { background: var(--cat, var(--accent)); }
+
+/* ------------------------------------------------------------------ chip -- */
+/* Category label. Deliberately quiet: a coloured dot, a tinted ground, no
+   outline, so a list of twelve stays calm. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0.3125rem 0.625rem 0.3125rem 0.5rem;
+  border-radius: var(--r-pill);
+  background: var(--cat-wash, var(--surface-raised));
+  color: var(--cat, var(--ink-2));
+  font-size: var(--t-label);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.chip-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--cat, var(--accent));
+  flex: none;
+}
+
+/* A chip that links somewhere: used for related topics. */
+button.chip, a.chip { transition: background-color var(--d-1) var(--e-out), transform var(--d-1) var(--e-out); }
+button.chip:hover, a.chip:hover { background: var(--cat-line, var(--surface-2, var(--surface-raised))); }
+button.chip:active, a.chip:active { transform: scale(0.97); }
+
+/* ----------------------------------------------------------------- rule -- */
+/* A short accent rule. Does the work of a section break without a full-width
+   line, which would slice the page into boxes. */
+.rule {
+  width: 2.25rem;
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  opacity: 0.85;
+}
+
+.hairline { height: 1px; background: var(--line-soft); border: 0; }
+
+/* ---------------------------------------------------------- block label -- */
+.block-label {
+  font-family: var(--font-ui);
+  font-size: var(--t-eyebrow);
+  font-weight: 700;
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: var(--s-3);
+}
+
+/* ---------------------------------------------------------------- points -- */
+.points { display: grid; gap: var(--s-3); }
+
+.points li {
+  position: relative;
+  padding-left: 1.375rem;
+  font-size: var(--t-ui);
+  line-height: var(--lh-list);
+  color: var(--ink-2);
+}
+
+/* The marker is a short dash rather than a bullet: reads as an annotated
+   margin note, which is the register this app is going for. */
+.points li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.75rem;
+  height: 1.5px;
+  background: var(--cat, var(--accent));
+  border-radius: var(--r-pill);
+}
+
+/* ---------------------------------------------------------------- caveat -- */
+.caveat {
+  border-left: 2px solid var(--cat, var(--accent));
+  padding: 0.125rem 0 0.125rem var(--s-4);
+}
+
+.caveat p {
+  font-size: var(--t-ui);
+  line-height: var(--lh-list);
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- source -- */
+/* The most important control on a topic page: the app guides, the article
+   teaches. So it is a full-width row with real weight, not a hyperlink. */
+.source {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--surface);
+  text-decoration: none;
+  box-shadow: var(--sh-1);
+  transition: border-color var(--d-2) var(--e-out),
+              transform var(--d-2) var(--e-out),
+              box-shadow var(--d-2) var(--e-out);
+}
+
+.source:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--sh-lift);
+}
+
+.source:active { transform: translateY(0); }
+
+.source-action {
+  display: block;
+  font-family: var(--font-read);
+  font-size: var(--t-ui);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.source-site {
+  display: block;
+  margin-top: 0.125rem;
+  font-family: var(--font-num);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+  word-break: break-all;
+}
+
+.source-arrow {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--accent);
+  transition: transform var(--d-2) var(--e-out);
+}
+.source:hover .source-arrow { transform: translate(2px, -2px); }
+
+/* --------------------------------------------------------------- buttons -- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 2.75rem;
+  padding: 0 var(--s-5);
+  border-radius: var(--r-pill);
+  font-size: var(--t-ui);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  border: 1px solid transparent;
+  transition: background-color var(--d-2) var(--e-out),
+              border-color var(--d-2) var(--e-out),
+              color var(--d-2) var(--e-out),
+              transform var(--d-1) var(--e-out);
+}
+.btn:active { transform: scale(0.98); }
+
+/* Unsized inline SVG defaults to 300x150, which would blow a button apart. */
+.btn svg { width: 1rem; height: 1rem; }
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--sh-1);
+}
+.btn-primary:hover { background: var(--accent-strong); }
+
+/* Toggled on, "learnt" drops to an outlined state: satisfied things should
+   stop shouting. */
+.btn-primary[aria-pressed="true"] {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--cat-line, var(--accent));
+  box-shadow: none;
+}
+
+.btn-quiet {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink-2);
+}
+.btn-quiet:hover { border-color: var(--ink-3); color: var(--ink); }
+
+.btn-icon {
+  width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  background: var(--surface);
+}
+.btn-icon:hover { color: var(--ink); border-color: var(--ink-3); }
+.btn-icon svg { width: 1.125rem; height: 1.125rem; }
+
+.btn-icon[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+.btn-icon[aria-pressed="true"] svg { fill: currentColor; }
+
+/* ------------------------------------------------------------------ card -- */
+/* Index rows rather than tiles: a hairline ground, a category tint at the
+   top edge, and enough padding that twelve of them do not turn into a wall. */
+.card {
+  position: relative;
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-4) var(--s-5);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  background: var(--surface);
+  text-decoration: none;
+  overflow: hidden;
+  transition: border-color var(--d-2) var(--e-out),
+              transform var(--d-2) var(--e-out),
+              box-shadow var(--d-2) var(--e-out);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 2px;
+  background: var(--cat, var(--accent));
+  opacity: 0.55;
+  transform: scaleX(0.12);
+  transform-origin: left;
+  transition: transform var(--d-3) var(--e-out), opacity var(--d-2) var(--e-out);
+}
+
+.card:hover {
+  border-color: var(--line);
+  transform: translateY(-2px);
+  box-shadow: var(--sh-lift);
+}
+.card:hover::before { transform: scaleX(1); opacity: 1; }
+.card:active { transform: translateY(0); }
+
+.card-title {
+  font-size: var(--t-title);
+  font-weight: 600;
+  line-height: 1.22;
+  color: var(--ink);
+}
+
+.card-excerpt {
+  font-family: var(--font-read);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  color: var(--ink-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-top: var(--s-1);
+}
+
+/* Learnt and starred are both marks, but they must not look interchangeable:
+   learnt is a filled check in the category hue, starred an amber outline. */
+.marks { display: inline-flex; align-items: center; gap: var(--s-2); }
+.marks svg { width: 0.9375rem; height: 0.9375rem; }
+.mark-learnt { color: var(--cat, var(--ink-3)); }
+.mark-star { color: var(--accent); }
+.marks [hidden] { display: none; }
+
+.card[data-learnt="true"] { background: var(--bg-veil); }
+.card[data-learnt="true"] .card-title { color: var(--ink-2); }
+.card[data-learnt="true"]::before { opacity: 0.22; }
+
+/* --------------------------------------------------------------- meter ---- */
+.meter { display: grid; gap: var(--s-2); }
+
+.meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--t-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.meter-count {
+  font-family: var(--font-num);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+}
+
+.meter-track {
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--line-soft);
+  overflow: hidden;
+}
+
+.meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  transition: width var(--d-3) var(--e-out);
+}
+
+/* -------------------------------------------------------------- week dots -- */
+.week { display: flex; align-items: center; gap: 0.375rem; }
+
+.week i {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: var(--line);
+}
+.week i[data-on="true"] { background: var(--accent); }
+.week i[data-today="true"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+/* ------------------------------------------------------------ deck cards -- */
+/* The shuffle screen's stacked deck. M5 gives it motion; the geometry already
+   carries the idea. */
+.deck {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  max-width: 22rem;
+  margin-inline: auto;
+}
+
+.deck-card {
+  position: absolute;
+  inset: 12% 8%;
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  background: var(--surface);
+  box-shadow: var(--sh-2);
+  display: grid;
+  align-content: end;
+  gap: var(--s-2);
+  padding: var(--s-4);
+}
+
+.deck-card[data-depth="2"] { transform: translate(0, -10%) rotate(-3.2deg) scale(0.94); opacity: 0.5; }
+.deck-card[data-depth="1"] { transform: translate(0, -5%) rotate(1.8deg) scale(0.97); opacity: 0.75; }
+.deck-card[data-depth="0"] { z-index: 2; }
+
+.deck-card p {
+  font-family: var(--font-read);
+  font-size: var(--t-ui);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ stub -- */
+/* Controls that are drawn for layout but wired in a later milestone. Dimmed
+   and tagged, so nobody mistakes a placeholder for a broken feature. */
+[data-stub] {
+  position: relative;
+  opacity: 0.5;
+  cursor: default;
+}
+
+[data-stub]::after {
+  content: attr(data-stub);
+  position: absolute;
+  top: -0.5rem;
+  right: 0;
+  font-family: var(--font-num);
+  font-size: 0.5625rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-1);
+  padding: 0.05rem 0.3rem;
+  background: var(--bg);
+}

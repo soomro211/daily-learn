@@ -1,0 +1,178 @@
+/* ==========================================================================
+   daily-learn — design tokens
+
+   Every colour, size and duration in the app resolves from this file. If a
+   value appears anywhere else, it is a bug. The two theme blocks are the only
+   place that knows what the palette looks like.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark light;
+
+  /* ---------------------------------------------------------------- type -- */
+  /* Serif carries reading, the sans carries interface, the mono carries
+     numbers so they align in counters and tables. Nothing else. */
+  --font-read: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+               Georgia, "Times New Roman", serif;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+             "Helvetica Neue", sans-serif;
+  --font-num: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, Menlo, monospace;
+
+  /* Steps are few on purpose: an index has to be scannable, and a reading
+     column has to hold still under the eye. */
+  --t-eyebrow: 0.6875rem;
+  --t-label:   0.75rem;
+  --t-sm:      0.8125rem;
+  --t-ui:      0.9375rem;
+  --t-read:    clamp(1.0625rem, 1.02rem + 0.28vw, 1.1875rem);
+  --t-title:   clamp(1.375rem, 1.2rem + 0.9vw, 1.75rem);
+  --t-display: clamp(2.0625rem, 1.55rem + 2.5vw, 2.9375rem);
+
+  --lh-tight:  1.1;
+  --lh-snug:   1.32;
+  --lh-read:   1.72;
+  --lh-list:   1.55;
+
+  --track-eyebrow: 0.16em;
+  --track-display: -0.021em;
+
+  /* -------------------------------------------------------------- layout -- */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4.5rem;
+  --s-9: 6.5rem;
+
+  --page-max: 43rem;      /* reading column */
+  --list-max: 54rem;      /* index can breathe wider */
+  --page-pad: clamp(1.125rem, 1rem + 1.5vw, 2.5rem);
+  --tabbar-h: 3.75rem;
+
+  --measure: 33rem;       /* characters per line, serif body */
+
+  --r-1: 0.375rem;
+  --r-2: 0.625rem;
+  --r-3: 1rem;
+  --r-pill: 62rem;
+
+  /* ------------------------------------------------------------- motion -- */
+  --d-1: 120ms;
+  --d-2: 220ms;
+  --d-3: 420ms;
+  --e-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --e-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* --------------------------------------------------------- category hues
+     Eight hues, one per category, spaced so that no two read alike at chip
+     size. Saturation and lightness come from the theme so a hue is legible on
+     either paper or ink. */
+  --cat-sat: 62%;
+  --cat-lit: 70%;
+  --cat-wash-s: 38%;
+  --cat-wash-l: 17%;
+
+  --hue-psychology:  268;
+  --hue-history:      24;
+  --hue-physics:     180;
+  --hue-biology:     142;
+  --hue-economics:    46;
+  --hue-philosophy:  344;
+  --hue-engineering: 226;
+  --hue-ideas:        92;
+}
+
+/* ------------------------------------------------------------------ ink ---
+   Default theme: warm charcoal rather than black, so the amber accent sits in
+   the same temperature family instead of fighting a blue cast. */
+html[data-theme="dark"] {
+  --bg:           hsl(32 14% 5.5%);
+  --bg-veil:      hsl(32 12% 8%);
+  --surface:      hsl(32 11% 9.5%);
+  --surface-raised: hsl(32 10% 12.5%);
+  --line:         hsl(32 10% 19%);
+  --line-soft:    hsl(32 10% 14%);
+
+  --ink:          hsl(38 30% 92%);
+  --ink-2:        hsl(35 14% 70%);
+  --ink-3:        hsl(33 10% 51%);
+
+  --accent:       hsl(38 78% 60%);
+  --accent-strong:hsl(36 88% 66%);
+  --accent-wash:  hsl(38 45% 14%);
+  --on-accent:    hsl(32 45% 9%);
+
+  --focus:        hsl(38 90% 70%);
+
+  --sh-1: 0 1px 2px hsl(0 0% 0% / 0.45);
+  --sh-2: 0 18px 44px -20px hsl(0 0% 0% / 0.75);
+  --sh-lift: 0 2px 4px hsl(0 0% 0% / 0.3), 0 18px 40px -22px hsl(0 0% 0% / 0.7);
+
+  --grain-opacity: 0.05;
+  --grain-blend: soft-light;
+
+  --cat-sat: 60%;
+  --cat-lit: 71%;
+  --cat-wash-s: 34%;
+  --cat-wash-l: 16%;
+}
+
+/* ----------------------------------------------------------------- paper --
+   The accent darkens rather than lightening, because ochre on cream has to
+   carry body text and hairlines without turning to paste. */
+html[data-theme="light"] {
+  --bg:           hsl(40 38% 95%);
+  --bg-veil:      hsl(40 30% 92%);
+  --surface:      hsl(45 44% 98.5%);
+  --surface-raised: hsl(40 30% 96%);
+  --line:         hsl(34 16% 84%);
+  --line-soft:    hsl(34 16% 89%);
+
+  --ink:          hsl(28 22% 12%);
+  --ink-2:        hsl(28 11% 34%);
+  /* 42% rather than a lighter grey: --ink-3 carries 11-13px eyebrows, excerpts
+     and captions, so it has to clear 4.5:1 on paper, not merely look dimmer. */
+  --ink-3:        hsl(30 9% 42%);
+
+  --accent:       hsl(28 74% 33%);
+  --accent-strong:hsl(26 80% 28%);
+  --accent-wash:  hsl(38 60% 91%);
+  --on-accent:    hsl(44 60% 97%);
+
+  --focus:        hsl(28 80% 40%);
+
+  --sh-1: 0 1px 2px hsl(28 25% 30% / 0.08);
+  --sh-2: 0 18px 40px -22px hsl(28 30% 25% / 0.22);
+  --sh-lift: 0 1px 2px hsl(28 25% 30% / 0.07), 0 16px 32px -20px hsl(28 30% 25% / 0.18);
+
+  --grain-opacity: 0.028;
+  --grain-blend: multiply;
+
+  --cat-sat: 52%;
+  --cat-lit: 36%;
+  --cat-wash-s: 46%;
+  --cat-wash-l: 92%;
+}
+
+/* -------------------------------------------------- category hue bindings --
+   Any element can opt into a category by naming it. Descendants then read
+   --cat, --cat-wash and --cat-line without knowing which category they are in.
+   ========================================================================== */
+
+[data-cat="psychology"]  { --cat-h: var(--hue-psychology); }
+[data-cat="history"]     { --cat-h: var(--hue-history); }
+[data-cat="physics"]     { --cat-h: var(--hue-physics); }
+[data-cat="biology"]     { --cat-h: var(--hue-biology); }
+[data-cat="economics"]   { --cat-h: var(--hue-economics); }
+[data-cat="philosophy"]  { --cat-h: var(--hue-philosophy); }
+[data-cat="engineering"] { --cat-h: var(--hue-engineering); }
+[data-cat="ideas"]       { --cat-h: var(--hue-ideas); }
+
+[data-cat] {
+  --cat: hsl(var(--cat-h) var(--cat-sat) var(--cat-lit));
+  --cat-wash: hsl(var(--cat-h) var(--cat-wash-s) var(--cat-wash-l));
+  --cat-line: hsl(var(--cat-h) var(--cat-sat) var(--cat-lit) / 0.34);
+}

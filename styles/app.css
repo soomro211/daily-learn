@@ -1,0 +1,352 @@
+/* ==========================================================================
+   daily-learn — app
+
+   Page frame, the three screens, and the reading view. Mobile-first: the
+   only wide-screen rules are the ones at the bottom of this file.
+   ========================================================================== */
+
+/* --------------------------------------------------------------- frame -- */
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding: var(--s-5) var(--page-pad) var(--s-3);
+}
+
+.mark {
+  font-family: var(--font-read);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.mark em { font-style: normal; color: var(--accent); }
+
+.masthead-right { display: flex; align-items: center; gap: var(--s-3); }
+
+.masthead-date {
+  font-family: var(--font-num);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.theme-toggle {
+  position: relative;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  background: var(--surface);
+  transition: color var(--d-2) var(--e-out), border-color var(--d-2) var(--e-out);
+}
+.theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+.theme-toggle svg { width: 0.9375rem; height: 0.9375rem; }
+
+/* Both icons exist; the theme decides which one is showing. Cross-faded so
+   the control never blinks out mid-transition. */
+.icon-moon { display: none; }
+.icon-sun  { display: block; }
+html[data-theme="light"] .icon-moon { display: block; }
+html[data-theme="light"] .icon-sun  { display: none; }
+
+main {
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--page-pad);
+}
+
+.screen { display: none; }
+.screen[data-active="true"] {
+  display: block;
+  animation: enter var(--d-3) var(--e-out) both;
+}
+
+@keyframes enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------------------- tab bar -- */
+/* Bottom, because this is a phone app first: everything reachable without
+   shifting the thumb. Becomes a floating pill on wide screens. */
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-1);
+  padding: var(--s-2) var(--page-pad) calc(var(--s-2) + env(safe-area-inset-bottom));
+  background: color-mix(in oklab, var(--bg) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border-top: 1px solid var(--line-soft);
+}
+
+.tab {
+  display: grid;
+  justify-items: center;
+  gap: 0.1875rem;
+  padding: var(--s-2) 0;
+  border-radius: var(--r-2);
+  color: var(--ink-3);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color var(--d-2) var(--e-out);
+}
+.tab svg { width: 1.25rem; height: 1.25rem; }
+.tab:hover { color: var(--ink-2); }
+.tab[aria-current="page"] { color: var(--accent); }
+
+/* ---------------------------------------------------------- topic view -- */
+.topic { display: grid; gap: var(--s-5); }
+
+.topic-head { display: grid; gap: var(--s-3); }
+
+.topic-title {
+  font-size: var(--t-display);
+  font-weight: 600;
+  line-height: 1.08;
+}
+
+/* Kicker row: category and a hairline that runs out to the edge, which keeps
+   the header from feeling like three unrelated lines. */
+.topic-kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  color: var(--line);
+}
+.topic-kicker .hairline { flex: 1; }
+
+/* The drop cap is the one decorative act on the page. It also tells the eye
+   where the reading starts. */
+.standfirst {
+  font-family: var(--font-read);
+  font-size: var(--t-read);
+  line-height: var(--lh-read);
+  color: var(--ink);
+  max-width: var(--measure);
+}
+
+.standfirst::first-letter {
+  float: left;
+  font-size: 3.4em;
+  line-height: 0.82;
+  font-weight: 600;
+  padding: 0.06em 0.09em 0 0;
+  color: var(--cat, var(--accent));
+}
+
+.blocks { display: grid; gap: var(--s-5); }
+
+.source-row { display: grid; gap: var(--s-3); }
+
+.topic-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+.topic-actions .btn-primary { flex: 1 1 auto; min-width: 12rem; }
+
+.related { display: grid; gap: var(--s-3); }
+.related-list { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+
+/* ---------------------------------------------------------- today view -- */
+.today { display: grid; gap: var(--s-6); }
+
+.today-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  padding: var(--s-4);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  background: var(--surface);
+}
+
+.strip-stat { display: grid; gap: 0.125rem; }
+
+.strip-value {
+  font-family: var(--font-num);
+  font-size: var(--t-title);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--ink);
+}
+.strip-value small { font-size: 0.62em; color: var(--ink-3); }
+
+.strip-label {
+  font-size: var(--t-eyebrow);
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* -------------------------------------------------------- library view -- */
+.library { display: grid; gap: var(--s-5); }
+
+.field {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 0 var(--s-4);
+  min-height: 2.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-3);
+}
+.field svg { width: 1rem; height: 1rem; }
+.field input {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--t-ui);
+  color: var(--ink);
+  width: 100%;
+  min-width: 0;
+}
+.field input::placeholder { color: var(--ink-3); }
+.field input:focus { outline: none; }
+.field:focus-within { border-color: var(--accent); color: var(--ink-2); }
+
+.tabs {
+  display: flex;
+  gap: var(--s-1);
+  padding: 0.25rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-pill);
+  background: var(--bg-veil);
+}
+.tab-btn {
+  flex: 1 1 auto;
+  padding: 0.4375rem var(--s-3);
+  border-radius: var(--r-pill);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--ink-3);
+  white-space: nowrap;
+  transition: color var(--d-2) var(--e-out), background-color var(--d-2) var(--e-out);
+}
+.tab-btn:hover { color: var(--ink-2); }
+.tab-btn[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--sh-1); }
+
+.filters {
+  display: flex;
+  gap: var(--s-2);
+  overflow-x: auto;
+  padding-block: var(--s-1);
+  margin-inline: calc(var(--page-pad) * -1);
+  padding-inline: var(--page-pad);
+  scrollbar-width: none;
+}
+.filters::-webkit-scrollbar { display: none; }
+
+.list { display: grid; gap: var(--s-3); }
+
+.list-count {
+  font-family: var(--font-num);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+/* -------------------------------------------------------- shuffle view -- */
+.shuffle { display: grid; gap: var(--s-6); text-align: center; justify-items: center; }
+.shuffle > * { width: 100%; }
+.shuffle .deck-copy { max-width: 26rem; margin-inline: auto; justify-self: center; }
+
+.lede {
+  font-family: var(--font-read);
+  font-size: var(--t-read);
+  line-height: var(--lh-read);
+  color: var(--ink-2);
+}
+
+.shuffle .filters { justify-content: flex-start; }
+
+/* ------------------------------------------------------------ empty state -- */
+.empty {
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-7) var(--s-4);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-3);
+  text-align: center;
+}
+.empty h3 { font-size: var(--t-title); }
+.empty p { font-size: var(--t-sm); color: var(--ink-3); }
+
+/* --------------------------------------------------------- prototype note -- */
+.prototype-note {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  max-width: var(--page-max);
+  margin: var(--s-7) auto 0;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-2);
+  border: 1px dashed var(--line);
+  color: var(--ink-3);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+.prototype-note svg { width: 0.9375rem; height: 0.9375rem; color: var(--accent); }
+.prototype-note strong { color: var(--ink-2); font-weight: 600; }
+.prototype-note button { margin-left: auto; color: var(--ink-3); font-size: var(--t-eyebrow); letter-spacing: 0.08em; text-transform: uppercase; }
+
+footer.site-foot {
+  max-width: var(--page-max);
+  margin: var(--s-8) auto 0;
+  padding: var(--s-5) var(--page-pad) 0;
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink-3);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ----------------------------------------------------------- wide screen --
+   Desktop is the secondary case; it gets breathing room and a two-up index,
+   nothing more. */
+@media (min-width: 44rem) {
+  :root { --page-max: 46rem; }
+  .tabbar {
+    left: 50%;
+    right: auto;
+    bottom: var(--s-5);
+    transform: translateX(-50%);
+    width: min(26rem, calc(100vw - 4rem));
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--line);
+    border-radius: var(--r-pill);
+    padding: var(--s-2);
+    box-shadow: var(--sh-2);
+  }
+  .list { grid-template-columns: 1fr 1fr; gap: var(--s-4); }
+  .list .list-count { grid-column: 1 / -1; }
+}
+
+@media (min-width: 68rem) {
+  :root { --page-pad: 3rem; }
+  .masthead, main, .prototype-note { max-width: var(--list-max); }
+  .today { grid-template-columns: minmax(0, 1fr); }
+}
