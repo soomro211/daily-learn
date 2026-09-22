@@ -476,7 +476,6 @@ main {
 /* -------------------------------------------------------- shuffle view -- */
 .shuffle { display: grid; gap: var(--s-6); text-align: center; justify-items: center; }
 .shuffle > * { width: 100%; }
-.shuffle .deck-copy { max-width: 26rem; margin-inline: auto; justify-self: center; }
 
 .lede {
   font-family: var(--font-read);
@@ -490,6 +489,24 @@ main {
    which would otherwise drag the shuffle screen's single centred caption to the
    left: one anonymous flex item at space-between goes to the start. */
 .shuffle .list-count { justify-content: center; }
+
+/* The stage holds the three things the screen can be showing — an undealt stack,
+   a landed card, and the message that a field has run out — at one height, so that
+   rolling does not shove the button below it down the page. 16rem is roughly what
+   the stack and the card each come to at phone width; the card is allowed to grow
+   past it under a three-line title rather than clip. */
+.stage {
+  display: grid;
+  align-content: start;
+  min-height: 16rem;
+}
+/* Items stretch rather than shrink-wrap: the two card shapes centre themselves by
+   their own max-width, and the message that a field has run out should fill the
+   column instead of wrapping its sentence to the width of its longest word. */
+.stage > * { width: 100%; }
+
+.roll-row { display: flex; justify-content: center; }
+.roll-row[hidden] { display: none; }
 
 /* ------------------------------------------------------------ empty state -- */
 .empty {

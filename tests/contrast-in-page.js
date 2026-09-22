@@ -192,6 +192,19 @@
     input.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
+  /* Seed through the store's own API by tapping, so the marks carry real dates and
+     the streak stays honest. A state that needs a marked topic has to be able to
+     mark one, which is why this sits out here rather than inside the run. */
+  function markThrough(id, action) {
+    location.hash = "#/topic/" + id;
+    return wait(180).then(function () {
+      var active = document.querySelector('.screen[data-active="true"]');
+      if (!active || parseFloat(getComputedStyle(active).opacity) < 0.999) return;
+      var button = document.querySelector('#screen-topic [data-act="' + action + '"]');
+      if (button && button.getAttribute("aria-pressed") !== "true") button.click();
+    });
+  }
+
   /* Every state the index can be in, plus every screen. Each row is one measure.
      Marks are set through the real buttons rather than written into storage, so a
      broken store would show up here as a broken state. */
@@ -213,33 +226,40 @@
     { label: "day, today", go: function () { location.hash = "#/today"; } },
     { label: "day, past with week strip", go: function () { location.hash = "#/day/2026-09-19"; } },
     { label: "day, invalid", go: function () { location.hash = "#/day/2026-02-30"; } },
-    { label: "shuffle", go: function () { location.hash = "#/shuffle"; } }
+    { label: "shuffle, nothing dealt", go: function () { location.hash = "#/shuffle"; } },
+    { label: "shuffle, a card dealt", go: function () {
+      return wait(60).then(function () {
+        var button = document.querySelector("#screen-shuffle [data-roll]");
+        if (button) button.click();
+      });
+    } },
+    { label: "shuffle, field run out", go: function () {
+      /* The only way to reach the fallback is to mark a field's topics through their
+         own buttons and then roll, so this does exactly that. Three of the sample
+         fields hold one topic each, which makes it a short honest route. */
+      return markThrough("shipping-container", "learnt").then(function () {
+        location.hash = "#/shuffle/engineering";
+        return wait(160);
+      }).then(function () {
+        var button = document.querySelector("#screen-shuffle [data-roll]");
+        if (button) button.click();
+      });
+    } }
   ];
 
   function runAll() {
-    /* The entrance animates opacity and transform only — no colour — but it never
-       advances in a page the browser is not painting, which would leave every
-       freshly entered screen at opacity 0 and every measurement meaningless. So
-       the animations are switched off for the audit. Text colours are untouched by
-       this; it only lets the screen become visible enough to read. */
-    Array.prototype.forEach.call(document.querySelectorAll(".screen"), function (node) {
-      node.style.animation = "none";
-    });
+    /* Entrance animations move opacity and transform only — no colour — but they
+       never advance in a page the browser is not painting, which would leave a
+       freshly entered screen at opacity 0 and every measurement meaningless. So they
+       are switched off for the audit. Written as a rule rather than applied to the
+       nodes found at this moment, because the rolled card is built later, by the
+       state above that taps the roll. */
+    var still = document.createElement("style");
+    still.textContent = ".screen, .screen * { animation: none !important; }";
+    document.head.appendChild(still);
 
     var marks = ["dunning-kruger", "occams-razor", "turkish-war"];
     var stars = ["turkish-war", "sky-is-blue"];
-
-    /* Seed through the store's own API by tapping, so the marks carry real dates
-       and the streak stays honest. */
-    function markThrough(id, action) {
-      location.hash = "#/topic/" + id;
-      return wait(180).then(function () {
-        var active = document.querySelector('.screen[data-active="true"]');
-        if (!active || parseFloat(getComputedStyle(active).opacity) < 0.999) return;
-        var button = document.querySelector('#screen-topic [data-act="' + action + '"]');
-        if (button && button.getAttribute("aria-pressed") !== "true") button.click();
-      });
-    }
 
     var chain = Promise.resolve();
     marks.forEach(function (id) { chain = chain.then(function () { return markThrough(id, "learnt"); }); });

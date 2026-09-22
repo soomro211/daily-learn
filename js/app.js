@@ -4,8 +4,10 @@
    Live now:   theme choice, hash routing, one topic per day with the thread
                steppable backwards by day or by week, the day streak, and
                learnt/star marks persisted with the date each was marked. The
-               index searches, filters by field and splits by status.
-   Still out:  the shuffle roll (M5).
+               index searches, filters by field and splits by status. The
+               shuffle deals an unmarked topic out of a stack that will not
+               repeat itself before it runs out.
+   Still out:  the real content (M7).
 
    Classic script, no modules: the app has to open straight from the
    filesystem, where module loading and fetch() are both blocked.
@@ -1191,8 +1193,9 @@
 
     library.clear.addEventListener("click", clearQuery);
 
-    /* Bound to the skeleton rather than the document, so the placeholder chips on
-       the shuffle screen cannot be caught by this handler when M5 wires them. */
+    /* Bound to the skeleton rather than the document: the shuffle screen carries a
+       second row of field chips, and a handler on the document would answer taps on
+       either of them. */
     library.root.addEventListener("click", function (event) {
       if (!event.target.closest) return;
 
@@ -1208,6 +1211,337 @@
       var chip = event.target.closest("[data-filter]");
       if (chip) goToLibrary(library.tab, knownCat(chip.getAttribute("data-filter")));
     });
+  }
+
+  /* ------------------------------------------------------------- shuffle ---
+     The daily pick is deliberately the same for everybody on a given date, so it
+     reads as an appointment rather than a slot machine. This screen is the
+     opposite: a roll has no right answer, so randomness is the point here.
+
+     Random by drawing, though, not by picking. Choosing one of thirteen topics at
+     random repeats a card often enough to look broken — the same failure the
+     date-hashed daily pick had. So the roll works through a shuffled stack: every
+     topic in play is dealt once before the stack turns over, and a new stack opens
+     on something other than the card already on the screen by trading it with the
+     card behind it, which keeps both rules without costing a topic its turn.
+
+     The stack lives in memory only. It is a queue for one sitting, not a record of
+     anything, which is why marks and day pins stay the app's only persistent state
+     and no third storage key is needed. */
+  var shuffle = {
+    built: false,
+    root: null,
+    stage: null,
+    row: null,
+    rollBtn: null,
+    label: null,
+    count: null,
+    status: null,
+    cat: "",
+    order: [],
+    shown: null,
+    /* idle = nothing dealt yet, rolled = a card is on the stage,
+       empty = the field has nothing left to deal. */
+    mode: "idle",
+    learntToo: false,   /* the fallback, reached only from the empty state */
+    handBack: false     /* a link inside the stage was followed; focus comes back */
+  };
+
+  function shuffleRoute(cat) {
+    return "#/shuffle" + (cat ? "/" + encodeURIComponent(cat) : "");
+  }
+
+  /* Same contract as goToLibrary: tells the caller whether a render is coming. */
+  function goToShuffle(cat) {
+    var target = shuffleRoute(cat);
+    if (target === location.hash) return false;
+    location.hash = target;
+    return true;
+  }
+
+  function shuffleScope() {
+    return shuffle.cat ? catLabel(shuffle.cat) : "every field";
+  }
+
+  /* What a roll is allowed to hand over: the field in play, minus what the reader
+     has already marked — unless the fallback was accepted, which puts the marked
+     ones back in. */
+  function shufflePool() {
+    var ids = [];
+    TOPICS.forEach(function (topic) {
+      if (shuffle.cat && topic.category !== shuffle.cat) return;
+      if (shuffle.learntToo || !Marks.isLearnt(topic.id)) ids.push(topic.id);
+    });
+    return ids;
+  }
+
+  /* False when a card has been marked, or has left the content, since the stack
+     was dealt. Skipping it costs one card from the current run rather than
+     breaking it: the rest of the stack is still each topic once. */
+  function stillInPlay(id) {
+    return !!TOPIC_BY_ID[id] && (shuffle.learntToo || !Marks.isLearnt(id));
+  }
+
+  function openShuffleDeck() {
+    var pool = shufflePool();
+    if (!pool.length) return;
+
+    var order = permutationOf(pool.length, (Math.random() * 0x100000000) >>> 0);
+    var deck = order.map(function (index) { return pool[index]; });
+
+    /* The stack must not open on the card still sitting on the screen. That card is
+       traded with the one behind it rather than dropped, so a stack still holds each
+       topic exactly once: dropping it would leave one topic short every stack it
+       happens to have ended, and over a long run that topic falls visibly behind the
+       rest — the same mistake, found the same way, that the daily picker made before
+       a swap replaced its substitution. With two topics in play the trade is between
+       the only two there are; with one there is nothing to trade, and the alternative
+       to showing it is showing nothing. */
+    if (deck.length > 1 && deck[0] === shuffle.shown) {
+      deck[0] = deck[1];
+      deck[1] = shuffle.shown;
+    }
+
+    shuffle.order = deck;
+  }
+
+  function drawNext() {
+    /* Two passes rather than recursion: the first can drain the stack entirely on
+       cards marked since it was dealt, which earns one reshuffle before the roll
+       gives up. Either way this returns or falls out, so a scope emptied by marks
+       cannot spin. */
+    for (var pass = 0; pass < 2; pass += 1) {
+      if (!shuffle.order.length) {
+        openShuffleDeck();
+        if (!shuffle.order.length) return null;
+      }
+      while (shuffle.order.length) {
+        var id = shuffle.order.shift();
+        if (stillInPlay(id)) return id;
+      }
+    }
+    return null;
+  }
+
+  /* A blank stack with the shuffle glyph on its face: nothing dealt yet. It is
+     decoration beside a labelled button, so the whole of it stays out of the
+     reading order rather than presenting cards a reader cannot open. */
+  function restingStage() {
+    return '<div class="deck" aria-hidden="true">' +
+        '<div class="deck-card" data-depth="2"></div>' +
+        '<div class="deck-card" data-depth="1"></div>' +
+        '<div class="deck-card" data-depth="0">' + svg("i-shuffle") + "</div>" +
+      "</div>";
+  }
+
+  /* The index's own card, reused whole: a rolled topic must not look like a
+     different kind of thing from the same topic in the library, and its marks are
+     then painted by the same function as every other row. The two cards behind it
+     are drawn in CSS, which keeps the stack from needing a height of its own. */
+  function rolledStage(topic) {
+    return '<div class="roll-stack">' + cardMarkup(topic) + "</div>";
+  }
+
+  /* The fallback says what ran out and offers the two ways past it, which is how
+     every other empty state in the app works. Widening is a link because it
+     changes the address; rolling through marked topics is not, because it is a
+     one-off concession the address should not pretend to remember. */
+  function exhaustedStage() {
+    var actions = '<button class="btn btn-quiet" type="button" data-include-learnt>' +
+      "Roll through the marked ones</button>";
+    if (shuffle.cat) {
+      actions += '<a class="btn btn-quiet" href="' + esc(shuffleRoute("")) + '" data-widen>' +
+        "Roll from every field</a>";
+    }
+
+    /* The field is named where naming it is the answer; with every field out of
+       topics there is no wider view to point at, and only one action left. */
+    return '<div class="empty"><h2>' +
+        (shuffle.cat ? "Nothing left in " + catLabel(shuffle.cat) : "Nothing left to roll") +
+      "</h2><p>Every topic " + (shuffle.cat ? "filed there" : "in the index") +
+      " is marked learnt, so there is nothing for the roll to hand over.</p>" +
+      actions + "</div>";
+  }
+
+  /* Rewritten whole, because the card that lands is a new node and a new node is
+     what plays the reveal. Whatever held focus inside it before is handed to
+     something by rollShuffle and renderShuffle, since this is the one place in the
+     app a control destroys itself. */
+  function paintStage() {
+    var topic = TOPIC_BY_ID[shuffle.shown];
+    var rolled = shuffle.mode === "rolled" && topic;
+
+    shuffle.stage.setAttribute("data-state", rolled ? "rolled" : shuffle.mode);
+    shuffle.stage.innerHTML = rolled
+      ? rolledStage(topic)
+      : shuffle.mode === "empty" ? exhaustedStage() : restingStage();
+  }
+
+  function shuffleCaptionText() {
+    var pool = shufflePool();
+    var bits = [];
+
+    if (shuffle.learntToo) {
+      /* Counting these as unmarked would be a lie — the fallback was reached
+         because there are none. */
+      bits.push(pool.length + (pool.length === 1 ? " topic" : " topics") + " in play");
+      bits.push("marked ones included");
+    } else {
+      bits.push(pool.length
+        ? pool.length + (pool.length === 1 ? " topic unmarked" : " topics unmarked")
+        : "nothing unmarked");
+      if (shuffle.order.length) {
+        bits.push(shuffle.order.length +
+          (shuffle.order.length === 1 ? " card" : " cards") + " before the stack turns");
+      }
+    }
+
+    return (shuffle.cat ? catLabel(shuffle.cat) : "Every field") + " — " + bits.join(" · ");
+  }
+
+  function syncShuffle() {
+    if (!shuffle.built) return;
+
+    each(shuffle.root.querySelectorAll("[data-filter]"), function (chip) {
+      chip.setAttribute("aria-pressed",
+        knownCat(chip.getAttribute("data-filter")) === shuffle.cat ? "true" : "false");
+    });
+
+    shuffle.label.textContent = "Roll from " + shuffleScope();
+    /* The control disappears with nothing to roll; the empty state that replaces it
+       carries the two actions that are still possible. Leaving a button that does
+       nothing on every tap would be the worse of the two. */
+    shuffle.row.hidden = shuffle.mode === "empty";
+    shuffle.count.textContent = shuffleCaptionText();
+
+    /* Patched rather than repainted: rebuilding the card here would replay its
+       entrance animation on every mark, which is the defect M2 was fixed for. */
+    var card = shuffle.stage.querySelector(".card");
+    if (card) paintCard(card);
+  }
+
+  /* A new field is a new question, so the card and the stack are dropped with it.
+     The last thing shown is kept for the deck alone: it still must not be the
+     first card out of the new stack. */
+  function resetShuffle(cat) {
+    shuffle.cat = cat;
+    shuffle.order.length = 0;
+    shuffle.learntToo = false;
+    shuffle.mode = "idle";
+    paintStage();
+  }
+
+  /* Focus goes to whatever the roll put where the control that caused it used to
+     be. Only the message needs help to take it: it is a div, and a negative
+     tabindex lets it be focused without adding a stop to the tab order the card it
+     sits beside already has. */
+  function focusStage(target) {
+    if (!target) return;
+    if (target.tagName === "DIV" && !target.hasAttribute("tabindex")) {
+      target.setAttribute("tabindex", "-1");
+    }
+    target.focus({ preventScroll: true });
+  }
+
+  function rollShuffle() {
+    /* The button under the stage is not destroyed by a roll and keeps focus, so a
+       reader can fire it again. A control inside the stage is destroyed by the roll
+       it triggers, and hiding the button when the stack runs out strands its focus
+       too — both hand it to what replaced them rather than to the body. */
+    var heldByStage = shuffle.stage.contains(document.activeElement);
+
+    var id = drawNext();
+    var topic = id ? TOPIC_BY_ID[id] : null;
+
+    if (topic) shuffle.shown = id;
+    shuffle.mode = topic ? "rolled" : "empty";
+    paintStage();
+    syncShuffle();
+
+    if (!topic) {
+      focusStage(shuffle.stage.querySelector(".empty"));
+      return;
+    }
+
+    if (heldByStage) focusStage(shuffle.stage.querySelector(".card"));
+
+    /* Spoken rather than shown: the tapped button keeps focus, so the card that
+       lands after it would otherwise go unnoticed. A status region, not a heading —
+       the visible caption below is deliberately not live, or every roll would be
+       read out twice. */
+    shuffle.status.textContent = topic.title + " — " + catLabel(topic.category);
+  }
+
+  function buildShuffle() {
+    var filters = ['<button class="chip" type="button" data-filter="" aria-pressed="true">All fields</button>']
+      .concat(CATEGORIES.map(function (cat) {
+        return '<button class="chip" type="button" data-filter="' + esc(cat.id) + '" data-cat="' +
+                 esc(cat.id) + '" aria-pressed="false"><span class="chip-dot"></span>' +
+                 esc(cat.label) + "</button>";
+      })).join("");
+
+    document.getElementById("screen-shuffle").innerHTML =
+      '<div class="shuffle">' +
+        '<header><h1 class="eyebrow" id="shuffle-h"><span class="eyebrow-mark"></span>Surprise me</h1>' +
+          '<h2 class="lede">A topic you have not marked yet, from one field or from all ' +
+          "of them. Nothing comes up twice until the stack has run out.</h2></header>" +
+        '<div class="filters" role="group" aria-label="Choose a field to roll from">' +
+          filters + "</div>" +
+        '<div class="stage" data-state="idle"></div>' +
+        '<div class="roll-row">' +
+          '<button class="btn btn-primary" type="button" data-roll>' +
+            svg("i-shuffle") + "<span></span></button>" +
+        "</div>" +
+        '<p class="list-count"><span class="list-count-text"></span>' +
+          '<span class="sr-only" role="status"></span></p>' +
+      "</div>";
+
+    shuffle.root = document.querySelector("#screen-shuffle .shuffle");
+    shuffle.stage = shuffle.root.querySelector(".stage");
+    shuffle.row = shuffle.root.querySelector(".roll-row");
+    shuffle.rollBtn = shuffle.root.querySelector("[data-roll]");
+    shuffle.label = shuffle.root.querySelector("[data-roll] span");
+    shuffle.count = shuffle.root.querySelector(".list-count-text");
+    shuffle.status = shuffle.root.querySelector('[role="status"]');
+    shuffle.built = true;
+
+    paintStage();
+
+    /* Bound to this screen's own root, as the index's controls are to theirs, so
+       the two rows of field chips cannot answer each other's taps. */
+    shuffle.root.addEventListener("click", function (event) {
+      if (!event.target.closest) return;
+
+      var chip = event.target.closest("[data-filter]");
+      if (chip) { goToShuffle(knownCat(chip.getAttribute("data-filter"))); return; }
+
+      if (event.target.closest("[data-roll]")) { rollShuffle(); return; }
+
+      if (event.target.closest("[data-include-learnt]")) {
+        shuffle.learntToo = true;
+        rollShuffle();
+        return;
+      }
+
+      /* Left as a link rather than intercepted, so it can be opened anywhere a link
+         can. It sits inside the stage, so this tap destroys it: the flag below is
+         how focus gets home when the new view is drawn. */
+      if (event.target.closest("a[data-widen]")) shuffle.handBack = true;
+    });
+  }
+
+  function renderShuffle(cat) {
+    var field = knownCat(cat);
+    if (!shuffle.built) buildShuffle();
+    /* Tapping the field already chosen changes no address, so no render follows it
+       and the card on the stage stays. Only a genuine change of field clears it. */
+    if (field !== shuffle.cat) resetShuffle(field);
+    syncShuffle();
+
+    if (shuffle.handBack) {
+      shuffle.handBack = false;
+      focusStage(shuffle.rollBtn);
+    }
   }
 
   /* -------------------------------------------------------------- screens --- */
@@ -1260,37 +1594,6 @@
     });
   }
 
-  function renderShuffle() {
-    var deck = TOPICS.slice(0, 3).map(function (topic, i) {
-      return '<div class="deck-card" data-cat="' + esc(topic.category) + '" data-depth="' + (2 - i) + '">' +
-               '<span class="chip"><span class="chip-dot"></span>' +
-                 esc(categoryOf(topic).label) + "</span>" +
-               "<p>" + esc(topic.title) + "</p></div>";
-    }).join("");
-
-    var filters = CATEGORIES.map(function (cat) {
-      return '<button class="chip" type="button" aria-disabled="true" data-cat="' + esc(cat.id) + '">' +
-               '<span class="chip-dot"></span>' + esc(cat.label) + "</button>";
-    }).join("");
-
-    document.getElementById("screen-shuffle").innerHTML =
-      '<div class="shuffle">' +
-        '<header><h1 class="eyebrow" id="shuffle-h"><span class="eyebrow-mark"></span>Surprise me</h1>' +
-          '<h2 class="lede">A topic you have not marked yet, from one field or from all of them.</h2></header>' +
-    /* The deck is an illustration of a card stack, not three selectable cards.
-       Its rear cards sit at half opacity to sell the depth, which leaves their
-       labels around 2-3:1; marking the whole stack decorative keeps that text
-       out of the reading order instead of presenting it as content a person
-       cannot comfortably read. M5 replaces it with the real roll. */
-    '<div class="deck" aria-hidden="true">' + deck + "</div>" +
-        '<div class="deck-copy">' +
-          '<button class="btn btn-primary" type="button" data-stub="M5">Roll from every field</button>' +
-        "</div>" +
-        '<div class="filters" role="group" aria-label="Roll within one field">' + filters + "</div>" +
-        '<p class="list-count">Choosing and animation arrive in M5.</p>' +
-      "</div>";
-  }
-
   /* ------------------------------------------------------------ syncing ---
      Marking a topic must not rebuild the page. A rebuild throws away the
      reader's scroll position and replays the entry animation, so the app looks
@@ -1331,6 +1634,11 @@
        is the only way an empty tab learns it has just become empty. */
     applyLibrary();
 
+    /* The shuffle keeps its card and only updates the numbers around it: a topic
+       marked after being rolled has to leave the stack's pool, and the card on the
+       stage has to show that it is marked. */
+    syncShuffle();
+
     var foot = document.getElementById("foot-count");
     if (foot) {
       var streak = Marks.streak();
@@ -1357,7 +1665,13 @@
       };
     }
 
-    if (parts[0] === "shuffle") return { screen: "shuffle" };
+    if (parts[0] === "shuffle") {
+      /* #/shuffle/<field> — one optional segment, the field to roll within. As with
+         the index, an unknown field falls back to every field rather than erroring.
+         What came up is deliberately not in the address: a roll is not repeatable,
+         so a bookmark of the result would be a promise this screen cannot keep. */
+      return { screen: "shuffle", cat: knownCat(decodeBit(parts[1])) };
+    }
 
     if (parts[0] === "day" && parts[1]) {
       var iso = decodeBit(parts[1]);
@@ -1419,7 +1733,7 @@
       else renderDay(route.iso);
     }
     if (route.screen === "library") renderLibrary(route.tab, route.cat);
-    if (route.screen === "shuffle") renderShuffle();
+    if (route.screen === "shuffle") renderShuffle(route.cat);
     if (route.screen === "topic") renderTopic(route.id);
 
     show(route.screen);

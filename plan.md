@@ -104,11 +104,37 @@ sample data.
 
 ## M5 · Shuffle
 
-- [ ] Pick a topic within one category
-- [ ] Pick a topic from all categories together
-- [ ] Skip topics already marked learnt
-- [ ] Fallback when a category has nothing left
-- [ ] Animated reveal, with a calm version for reduced-motion settings
+- [x] Pick a topic within one category
+- [x] Pick a topic from all categories together
+- [x] Skip topics already marked learnt
+- [x] Fallback when a category has nothing left
+- [x] Animated reveal, with a calm version for reduced-motion settings
+
+The roll deals out of a shuffled stack rather than picking at random, which is how
+the daily pick ended up working once it was measured: random picking repeats
+quickly enough to look like a broken app. Each topic in play comes up exactly once
+before the stack turns over, and a stack that would open on the card already on
+screen trades its first two cards instead — the correction the daily picker needed,
+applied here before it could bite. Checked over thirteen hundred rolls, where it
+holds: no topic twice in a stack, none waiting out more than two stacks, and no
+topic more than an appearance behind the fullest one across a hundred stacks.
+
+The field you roll within is part of the address, as the index's facets are:
+`#/shuffle/philosophy` is a roll narrowed to one field and a link worth keeping.
+What came up is deliberately not, because a roll cannot be repeated — a bookmark of
+the result would be a promise the app cannot keep. A landed card is the index's own
+card, so a rolled topic looks, reads and marks exactly like the same topic in the
+library.
+The reveal moves the stack rather than uncovering it, which is what lets it be
+honest: the topic is on the page and openable the instant the roll is taken, and the
+animation is only the card settling. With motion reduced it settles in a frame, and
+because the settled look is the card's own style rather than one keyframe of an
+animation, nothing can be left half-drawn.
+
+Found while checking: the fallback line counted two topics as unmarked when both
+were marked, and the two controls inside the stage — the message that a field has
+run out, and the button that hides itself when it appears — each destroyed the other
+one's focus, so focus now goes to whatever replaced them.
 
 **Done when:** repeated rolls give varied, unlearnt results and the animation
 never blocks reading the result.
@@ -166,5 +192,6 @@ Yours to ask for. Not automatic.
   refers to it. `node tests/search-logic.js` exercises the index's search and
   filters against the real content; `node tests/day-arithmetic.js` runs the
   calendar and the daily pick over fifteen hundred days in twelve time zones;
-  `tests/contrast-in-page.js` is loaded into the open page to measure every
-  colour pairing in both themes.
+  `node tests/shuffle-deck.js` deals thousands of rolls and checks the stack
+  for repeats, marked topics and balance; `tests/contrast-in-page.js` is
+  loaded into the open page to measure every colour pairing in both themes.
