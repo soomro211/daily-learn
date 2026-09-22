@@ -249,7 +249,17 @@ main {
   align-items: center;
   gap: 0.1875rem;
 }
-.week-strip .nav-btn { width: 2.125rem; height: 2.125rem; }
+.week-strip .nav-btn {
+  width: 2.125rem;
+  height: 2.125rem;
+  /* Both pairs of arrows in this panel are circular buttons of nearly the same
+     size, and nothing on screen says that one steps a day and the other a week.
+     Dropping the ground here leaves the bare chevrons reading as part of the
+     strip they belong to, and keeps the boxed pair above as the day control. */
+  background: transparent;
+  border-color: transparent;
+}
+.week-strip .nav-btn:hover:not([aria-disabled="true"]) { border-color: transparent; }
 .week-strip .nav-btn svg { width: 0.75rem; height: 0.75rem; }
 
 /* A whole week across a phone is narrow, so the day number carries the tap
@@ -314,7 +324,10 @@ main {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.25rem var(--s-3);
+  /* The gap between pairs has to be visibly larger than the gap inside one, or
+     the line reads as a sentence and the labels are lost in it: on a phone this
+     displayed as "LEARNT 0 of 13 STREAK not started". */
+  gap: 0.25rem var(--s-5);
   padding-top: var(--s-2);
   border-top: 1px solid var(--line-soft);
   font-family: var(--font-num);
@@ -322,7 +335,15 @@ main {
   letter-spacing: 0.04em;
   color: var(--ink-3);
 }
+.daybar-stats .stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+}
 .daybar-stats strong { color: var(--ink-2); font-weight: 500; }
+/* "not started", "3 days" and a list of titles are English, not figures, and set
+   in the number face they read like a value the app dumped. */
+.daybar-stats .stat-prose { font-family: var(--font-ui); letter-spacing: 0; }
 .daybar-stats .stat-lead {
   font-family: var(--font-ui);
   letter-spacing: var(--track-eyebrow);
@@ -334,8 +355,7 @@ main {
 .library { display: grid; gap: var(--s-5); }
 
 .field {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
   gap: var(--s-3);
   padding: 0 var(--s-3) 0 var(--s-4);
@@ -346,13 +366,28 @@ main {
   color: var(--ink-3);
   transition: border-color var(--d-2) var(--e-out), color var(--d-2) var(--e-out);
 }
+/* The label holds the icon and the field together so that tapping anywhere along
+   the pill — most of its width — focuses the input. The clear button is outside
+   it: a label may not contain another control, and a button inside one takes the
+   tap by focusing the field instead of clearing it. */
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: 1 1 auto;
+  min-width: 0;
+}
 .field svg { width: 1rem; height: 1rem; }
 .field input {
   border: 0;
   background: none;
   font: inherit;
-  font-size: var(--t-ui);
+  /* 16px is not a taste setting. Below it iOS Safari zooms the page when the
+     field takes focus and does not zoom back out, so a search leaves the reader
+     panning a magnified index. */
+  font-size: 1rem;
   color: var(--ink);
+  flex: 1 1 auto;
   width: 100%;
   min-width: 0;
 }
@@ -465,7 +500,7 @@ main {
   border-radius: var(--r-3);
   text-align: center;
 }
-.empty h3 { font-size: var(--t-title); }
+.empty h1, .empty h2, .empty h3 { font-size: var(--t-title); }
 .empty p { font-size: var(--t-sm); color: var(--ink-3); }
 /* Centred rather than stretched to the full measure: a wide amber-looking
    rectangle would outrank the sentence that explains it. */

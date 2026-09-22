@@ -14,15 +14,50 @@
 (function () {
   "use strict";
 
-  var CATEGORIES = window.DL_CATEGORIES;
-  var TOPICS = window.DL_TOPICS;
   var ROOT = document.documentElement;
+
+  /* M7 is about 120 hand-written entries. Without a gate, one topic missing its
+     source would throw while the index was being built — mid-string, so the whole
+     screen comes up empty and the cause is a single field on one row. Filtering
+     once at startup means a bad entry costs itself and says so, instead of
+     costing the page. Ids must be strings because they travel through attributes
+     and hrefs, where a number would not read back the same. */
+  function usableTopic(topic) {
+    return !!(topic && typeof topic.id === "string" && typeof topic.title === "string" &&
+      typeof topic.category === "string" && typeof topic.summary === "string" &&
+      topic.source && typeof topic.source.url === "string" && topic.source.url &&
+      typeof topic.source.label === "string" && topic.source.label);
+  }
+
+  var CATEGORIES = (window.DL_CATEGORIES || []).filter(function (cat) {
+    return cat && typeof cat.id === "string" && typeof cat.label === "string";
+  });
 
   var CATEGORY_BY_ID = {};
   CATEGORIES.forEach(function (c) { CATEGORY_BY_ID[c.id] = c; });
 
+  var TOPICS = [];
   var TOPIC_BY_ID = {};
-  TOPICS.forEach(function (t) { TOPIC_BY_ID[t.id] = t; });
+
+  (window.DL_TOPICS || []).forEach(function (topic) {
+    if (!usableTopic(topic)) {
+      console.warn("daily-learn: dropped a topic that is missing a required field",
+        topic && topic.id ? topic.id : topic);
+      return;
+    }
+    if (TOPIC_BY_ID[topic.id]) {
+      /* Two rows sharing an id would open the same page and share one mark, so
+         the second is the one that loses. */
+      console.warn("daily-learn: dropped a second topic with the id " + topic.id);
+      return;
+    }
+    TOPICS.push(topic);
+    TOPIC_BY_ID[topic.id] = topic;
+  });
+
+  if (!TOPICS.length) {
+    console.warn("daily-learn: no usable topics were found, so every screen is empty");
+  }
 
   var SCREENS = ["day", "library", "topic", "shuffle"];
 
@@ -112,7 +147,8 @@
      epoch milliseconds. setDate() on a local Date is immune to daylight saving
      — checked over three years of consecutive days in a zone that shifts and
      one that sits at +14 — whereas millisecond arithmetic silently risks a
-     skipped or doubled day. */
+     skipped or doubled day. Counting days is a different job and has its own
+     trap; see dayNumber. */
   function isoDay(date) {
     var m = date.getMonth() + 1;
     var d = date.getDate();
@@ -149,8 +185,16 @@
     return isoDay(date);
   }
 
+  /* The number of a calendar day, counted from the epoch in UTC so that it is the
+     same integer for the same date in every zone. Dividing a *local* midnight by
+     a day's milliseconds — which this function used to do — is not: in a zone
+     whose offset straddles UTC, spring-forward pulls the next midnight back into
+     the previous UTC day, so London got 2026-03-29 and 03-30 the same number
+     (one topic on two consecutive days, and the deck cycle shifting) and skipped
+     a whole number on 2026-10-26. Measured over 1,200 consecutive days in nine
+     zones: 14 broken steps this way, 0 the Date.UTC way. */
   function dayNumber(date) {
-    return Math.floor(new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() / 864e5);
+    return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 864e5);
   }
 
   function daysBetween(fromIso, toIso) {
@@ -190,12 +234,17 @@
      given topic could disappear for 229 straight days. That reads as a broken
      app even though every day was technically valid.
 
-     So instead: work through a shuffled deck. Each topic appears exactly once
-     per cycle, the deck is re-shuffled for every cycle so the order is not a
-     visible loop, and a cycle's first card is swapped when it would repeat the
-     previous cycle's last. Measured over 1,095 days at 13 topics: counts
-     within 82-87, no topic absent more than 26 days, no two adjacent days ever
-     the same topic.
+     So instead: work through a shuffled deck. Each topic appears exactly once per
+     cycle, the deck is re-shuffled for every cycle so the order is not a visible
+     loop, and a cycle's first card is swapped with its second when it would repeat
+     the previous cycle's last. Measured over 4,000 consecutive days at 13, 60, 120
+     and 150 topics: zero adjacent repeats, every topic exactly once per cycle, and
+     the longest absence under two cycles — which at 120 topics means a given idea
+     can stay unseen for about eight months before the deck reshuffles. That is the
+     cost of exact fairness, and it is the right trade for an index meant to be
+     worked through rather than mined for a hit. Re-checked in twelve timezones by
+     tests/day-arithmetic.js, which is what found the substitution defect this
+     replaced.
 
      Deterministic throughout — the same date resolves to the same topic for
      everyone on every device, with no randomness that a reload could undo. */
@@ -231,17 +280,25 @@
     return DECKS[key];
   }
 
+  /* A cycle's first card must not repeat the previous cycle's last. The two are
+     swapped rather than one being substituted for the other: substituting leaves
+     the replacement at its own position as well, which both shows the same topic
+     on two consecutive days and drops the swapped-away topic from the cycle
+     entirely. A swap moves nothing in or out, so the deck stays a permutation and
+     every topic still appears exactly once per cycle. Only positions 0 and 1 are
+     involved, and the previous cycle's last card is never one of them, so this
+     test never has to look back further than one cycle. */
   function indexOfTopicOn(date, length) {
     var day = dayNumber(date);
     var cycle = Math.floor(day / length);
     var position = day - cycle * length;
     var deck = deckFor(cycle, length);
-    var index = deck[position];
 
-    if (position === 0 && cycle > 0 && index === deckFor(cycle - 1, length)[length - 1]) {
-      index = deck[1];
+    if (cycle > 0 && length > 1 && position < 2 &&
+        deck[0] === deckFor(cycle - 1, length)[length - 1]) {
+      return deck[1 - position];
     }
-    return index;
+    return deck[position];
   }
 
   /* ---------------------------------------------------------- day records ---
@@ -251,22 +308,29 @@
      — which is the whole point of being able to revisit a day.
      Never written for a day that has not arrived. */
   var Days = (function () {
-    var KEY = "dl.days.v1";
     var VERSION = 1;
+    var KEY = "dl.days.v" + VERSION;
     var records = {};
     var usable = true;
 
     function read() {
+      var raw = null;
       try {
-        var raw = window.localStorage.getItem(KEY);
-        if (!raw) return;
+        raw = window.localStorage.getItem(KEY);
+      } catch (error) {
+        usable = false;
+        return;
+      }
+      if (!raw) return;
+      try {
         var parsed = JSON.parse(raw);
         if (!parsed || parsed.version !== VERSION) return;
         Object.keys(parsed.onDay || {}).forEach(function (iso) {
           if (parseIsoDay(iso)) records[iso] = parsed.onDay[iso];
         });
       } catch (error) {
-        usable = false;
+        /* Unreadable, not unavailable: start clean so the day pinning carries on
+           working and the next write repairs the key. */
       }
     }
 
@@ -300,8 +364,10 @@
        { version: 1, learnt: { topicId: "YYYY-MM-DD" }, starred: { topicId: 1 } }
      */
   var Marks = (function () {
-    var KEY = "dl.marks.v1";
     var VERSION = 1;
+    /* The key carries the version, so a bump starts a fresh store rather than
+       reading the old shape, finding it unusable, and then overwriting it. */
+    var KEY = "dl.marks.v" + VERSION;
     var learnt = {};
     var starred = {};
     var usable = true;
@@ -342,17 +408,26 @@
     }
 
     function read() {
+      var raw = null;
       try {
-        var raw = window.localStorage.getItem(KEY);
-        if (!raw) return;
+        raw = window.localStorage.getItem(KEY);
+      } catch (error) {
+        /* Reading is refused outright: a browser that blocks storage, where
+           session-only marks and the note about them are the right outcome. */
+        usable = false;
+        return;
+      }
+      if (!raw) return;
+      try {
         var parsed = JSON.parse(raw);
         if (!parsed || parsed.version !== VERSION) return;
         learnt = keepKnownDates(parsed.learnt);
         starred = keepKnown(parsed.starred);
       } catch (error) {
-        /* Blocked, full, or unparseable. The app carries on with session-only
-           marks and the storage note says so out loud. */
-        usable = false;
+        /* The bytes are there and unreadable. Start from empty and let the next
+           write replace them — the previous handling gave up on persistence for
+           the rest of the profile here, so one damaged character would quietly
+           cost the reader every mark they made from then on. */
       }
     }
 
@@ -489,10 +564,17 @@
 
   /* -------------------------------------------------------- button paint ---
      Rendering and syncing share these, so a mark applied to a screen already on
-     the page cannot drift from what a fresh render would have shown. */
+     the page cannot drift from what a fresh render would have shown.
+
+     Both take an empty button as a first paint rather than a change. Without
+     that, opening a topic learnt last week plays the pop animation, because the
+     aria-pressed attribute being looked up to decide "did this just change" does
+     not exist yet on a node that has never been painted — so the app appears to
+     confirm an action the reader never took. */
   function learntState(button, isLearnt) {
     if (!button) return;
-    var justMarked = isLearnt && button.getAttribute("aria-pressed") !== "true";
+    var justMarked = isLearnt && !!button.firstChild &&
+      button.getAttribute("aria-pressed") !== "true";
     button.setAttribute("aria-pressed", isLearnt ? "true" : "false");
     button.setAttribute("title", isLearnt
       ? "Marked as learnt — tap to undo"
@@ -504,7 +586,8 @@
 
   function starState(button, isStarred) {
     if (!button) return;
-    var justMarked = isStarred && button.getAttribute("aria-pressed") !== "true";
+    var justMarked = isStarred && !!button.firstChild &&
+      button.getAttribute("aria-pressed") !== "true";
     button.setAttribute("aria-pressed", isStarred ? "true" : "false");
     button.setAttribute("aria-label", isStarred ? "Remove from starred" : "Add to starred");
     button.innerHTML = svg("i-star");
@@ -650,8 +733,12 @@
       navButton("i-chev-right", "#/day/" + addIsoDays(monday, 7), "Next week", !canGoOn);
   }
 
-  function statPair(label, value) {
-    return '<span class="stat-lead">' + esc(label) + "</span><strong>" + esc(value) + "</strong>";
+  /* One box per pair. Two flex items separated by the same gap that sits between
+     them and inside them reads as a run-on — "LEARNT 0 of 13 STREAK not started"
+     gives the eye nothing to group by, which is how it looked on a phone. */
+  function statPair(label, value, prose) {
+    return '<span class="stat"><span class="stat-lead">' + esc(label) + "</span>" +
+      "<strong" + (prose ? ' class="stat-prose"' : "") + ">" + esc(value) + "</strong></span>";
   }
 
   function statsMarkup(iso) {
@@ -660,7 +747,7 @@
 
     if (iso === todayIso()) {
       var today = [statPair("Learnt", Marks.countLearnt() + " of " + TOPICS.length),
-                   statPair("Streak", streakText)];
+                   statPair("Streak", streakText, true)];
       if (Marks.countStarred()) today.push(statPair("Starred", String(Marks.countStarred())));
       return today.join("");
     }
@@ -673,7 +760,8 @@
       ? marked.slice(0, 2).join(", ") + (marked.length > 2 ? " +" + (marked.length - 2) + " more" : "")
       : "Nothing marked";
 
-    return statPair("This day", record) + statPair("Streak now", streak.days ? plural(streak.days, "day") : "none");
+    return statPair("This day", record, true) +
+      statPair("Streak now", streak.days ? plural(streak.days, "day") : "none", true);
   }
 
   function daybarMarkup(iso) {
@@ -713,16 +801,22 @@
 
   function cardMarkup(topic) {
     var cat = categoryOf(topic);
+    /* The two marks carry their own words for a screen reader. An icon alone is
+       invisible to it and a title attribute is unreliable, which would leave a
+       non-visual reader on the Learnt tab unable to tell which of a hundred rows
+       qualify — and the only other difference is the card's background colour. */
     return '<a class="card" href="#/topic/' + esc(topic.id) + '"' +
              ' data-topic="' + esc(topic.id) + '" data-cat="' + esc(topic.category) + '">' +
              '<span class="chip"><span class="chip-dot"></span>' + esc(cat.label) + "</span>" +
-             '<h3 class="card-title">' + esc(topic.title) + "</h3>" +
+             '<h2 class="card-title">' + esc(topic.title) + "</h2>" +
              '<p class="card-excerpt">' + esc(topic.summary) + "</p>" +
              '<span class="card-foot">' +
                '<span class="source-site">' + esc(domainOf(topic.source.url)) + "</span>" +
                '<span class="marks">' +
-                 '<span class="mark-learnt" hidden title="Learnt">' + svg("i-check") + "</span>" +
-                 '<span class="mark-star" hidden title="Starred">' + svg("i-star") + "</span>" +
+                 '<span class="mark-learnt" hidden>' + svg("i-check") +
+                   '<span class="sr-only">Learnt</span></span>' +
+                 '<span class="mark-star" hidden>' + svg("i-star") +
+                   '<span class="sr-only">Starred</span></span>' +
                "</span>" +
              "</span>" +
            "</a>";
@@ -842,8 +936,17 @@
     });
   }
 
+  /* What the search actually searched for, which is not always what was typed:
+     a query of "…" or "d" yields no tokens and narrows nothing, so the line must
+     not credit it with a search. Echoing the tokens also shows "dunning-kruger"
+     as the two words it was matched on. */
+  function queryEcho() {
+    var tokens = tokensOf(library.query);
+    return tokens.length ? tokens.join(" ") : "";
+  }
+
   function narrowed() {
-    return library.tab !== "all" || !!library.cat || !!library.query;
+    return library.tab !== "all" || !!library.cat || !!queryEcho();
   }
 
   function dropQuery() {
@@ -943,7 +1046,7 @@
       ? '<button class="btn btn-quiet" type="button" data-clear-search>' + esc(state.label) + "</button>"
       : '<a class="btn btn-quiet" href="' + esc(state.href) + '">' + esc(state.label) + "</a>";
 
-    return '<div class="empty empty-list"><h3>' + esc(state.title) + "</h3>" +
+    return '<div class="empty empty-list"><h2>' + esc(state.title) + "</h2>" +
       "<p>" + esc(state.body) + "</p>" + action + "</div>";
   }
 
@@ -951,7 +1054,8 @@
      that contradict each other as facets are added and removed. */
   function countMarkup(found) {
     var bits = [];
-    if (library.query) bits.push("“" + library.query + "”");
+    var echo = queryEcho();
+    if (echo) bits.push("“" + echo + "”");
     if (library.tab !== "all") bits.push(libraryTabLabel(library.tab));
     if (library.cat) bits.push(catLabel(library.cat));
 
@@ -1040,17 +1144,22 @@
                tab.label + "</button>";
     }).join("");
 
+    /* The clear button sits outside the label on purpose: a label may not contain
+       another control, and a button inside one steals the tap by focusing the
+       field instead of clearing it. */
     document.getElementById("screen-library").innerHTML =
       '<div class="library">' +
-        '<header><p class="eyebrow" id="library-h"><span class="eyebrow-mark"></span>The index</p></header>' +
+        '<header><h1 class="eyebrow" id="library-h"><span class="eyebrow-mark"></span>The index</h1></header>' +
         '<div class="meter">' + meterMarkup() + "</div>" +
-        '<label class="field">' +
-          "<span>" + svg("i-search") + "</span>" +
-          '<input type="search" placeholder="Search titles, summaries and fields" ' +
-            'aria-label="Search topics" autocomplete="off" spellcheck="false">' +
+        '<div class="field">' +
+          '<label class="field-label">' +
+            "<span>" + svg("i-search") + "</span>" +
+            '<input type="search" placeholder="Search titles, summaries and fields" ' +
+              'aria-label="Search topics" autocomplete="off" spellcheck="false">' +
+          "</label>" +
           '<button class="field-clear" type="button" aria-label="Clear search" title="Clear search" hidden>' +
             svg("i-close") + "</button>" +
-        "</label>" +
+        "</div>" +
         '<div class="tabs" role="group" aria-label="Filter by status">' + tabs + "</div>" +
         '<div class="filters" role="group" aria-label="Filter by field">' + filters + "</div>" +
         '<p class="list-count"><span class="list-count-text" aria-live="polite"></span>' +
@@ -1116,7 +1225,7 @@
   function renderBadDay() {
     currentDayIso = null;
     document.getElementById("screen-day").innerHTML =
-      '<div class="day"><div class="empty"><h3 id="day-h">No such day</h3>' +
+      '<div class="day"><div class="empty"><h1 id="day-h">No such day</h1>' +
         "<p>A date has to read as year-month-day, and it has to be one that exists — " +
         "14 January 2026 does, 2026-02-30 does not.</p>" +
         '<p><a class="btn btn-quiet" href="#/today">Go to today</a></p></div></div>';
@@ -1137,7 +1246,7 @@
     var topic = TOPIC_BY_ID[id];
 
     if (!topic) {
-      screen.innerHTML = '<div class="empty"><h3 id="topic-h">No such topic</h3>' +
+      screen.innerHTML = '<div class="empty"><h1 id="topic-h">No such topic</h1>' +
         "<p>That link points somewhere not in this index.</p>" +
         '<p><a class="btn btn-quiet" href="#/library">Back to the index</a></p></div>';
       return;
@@ -1166,7 +1275,7 @@
 
     document.getElementById("screen-shuffle").innerHTML =
       '<div class="shuffle">' +
-        '<header><p class="eyebrow" id="shuffle-h"><span class="eyebrow-mark"></span>Surprise me</p>' +
+        '<header><h1 class="eyebrow" id="shuffle-h"><span class="eyebrow-mark"></span>Surprise me</h1>' +
           '<h2 class="lede">A topic you have not marked yet, from one field or from all of them.</h2></header>' +
     /* The deck is an illustration of a card stack, not three selectable cards.
        Its rear cards sit at half opacity to sell the depth, which leaves their
@@ -1177,7 +1286,7 @@
         '<div class="deck-copy">' +
           '<button class="btn btn-primary" type="button" data-stub="M5">Roll from every field</button>' +
         "</div>" +
-        '<div class="filters" aria-label="Roll within one field">' + filters + "</div>" +
+        '<div class="filters" role="group" aria-label="Roll within one field">' + filters + "</div>" +
         '<p class="list-count">Choosing and animation arrive in M5.</p>' +
       "</div>";
   }
@@ -1328,7 +1437,13 @@
        whole list — starts at the top. */
     var place = route.screen === "library" && entering ? library.scroll : 0;
     window.scrollTo({ top: place, behavior: "auto" });
-    if (opts.navigate) moveFocus(route.screen);
+
+    /* Only when the screen actually changed. Tapping a tab or a field is also a
+       route change, but nothing was destroyed — the skeleton is still there and
+       the tapped control is still under the finger. Moving focus then would drop
+       a keyboard or screen-reader user back at the heading, to tab all the way
+       through the toolbar again for the next filter. */
+    if (opts.navigate && entering) moveFocus(route.screen);
   }
 
   /* ------------------------------------------------------------ binding --- */

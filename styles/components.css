@@ -18,6 +18,10 @@
   letter-spacing: var(--track-eyebrow);
   text-transform: uppercase;
   color: var(--ink-3);
+  /* Stated because this element is a screen's h1: without it the heading rule in
+     base.css would set its line-height, and the two index screens would sit at
+     different heights from the paragraph it used to be. */
+  line-height: 1.3;
 }
 
 .eyebrow-mark {
@@ -44,6 +48,10 @@
   letter-spacing: 0.01em;
   white-space: nowrap;
   line-height: 1.3;
+  /* Three of the four places a chip appears are links, and the default underline
+     turns a quiet tag into a struck-through one. The hover state and the dot carry
+     the fact that it is interactive instead. */
+  text-decoration: none;
 }
 
 .chip-dot {
@@ -95,6 +103,10 @@ button.chip:active, a.chip:active { transform: scale(0.97); }
 .points li {
   position: relative;
   padding-left: 1.375rem;
+  /* The bullets are part of what gets read, not of the interface around it. The
+     summary above them is serif and the same summary is serif on an index card,
+     so setting these in the UI face made the page change voice halfway down. */
+  font-family: var(--font-read);
   font-size: var(--t-ui);
   line-height: var(--lh-list);
   color: var(--ink-2);
@@ -114,12 +126,13 @@ button.chip:active, a.chip:active { transform: scale(0.97); }
 }
 
 /* ---------------------------------------------------------------- caveat -- */
-.caveat {
+/* The rule belongs to the paragraph rather than the section. The heading above it
+   is a label, and a label indented away from the column of labels on the page
+   reads as a mistake rather than as a quotation. */
+.caveat p {
   border-left: 2px solid var(--cat, var(--accent));
   padding: 0.125rem 0 0.125rem var(--s-4);
-}
-
-.caveat p {
+  font-family: var(--font-read);
   font-size: var(--t-ui);
   line-height: var(--lh-list);
   color: var(--ink-2);
@@ -306,6 +319,19 @@ button.chip:active, a.chip:active { transform: scale(0.97); }
 .card:hover::before { transform: scaleX(1); opacity: 1; }
 .card:active { transform: translateY(0); }
 
+/* The top rule grows from a stub on hover. A touchscreen never hovers, so the
+   stub would be the permanent state of every card in the list: a fragment of
+   colour attached to nothing, which is what the phone screenshots showed. On
+   those devices it is drawn whole and quiet, which is how it already looks the
+   moment a cursor leaves it. */
+@media (hover: none) {
+  .card::before { transform: none; opacity: 0.28; }
+}
+
+/* A grid child stretches, which turned the category tag into a coloured bar the
+   full width of the card. It should sit beside its own label. */
+.card .chip { justify-self: start; }
+
 .card-title {
   font-size: var(--t-title);
   font-weight: 600;
@@ -373,9 +399,12 @@ button.chip:active, a.chip:active { transform: scale(0.97); }
 }
 
 .meter-track {
-  height: 3px;
+  /* Was 3px in the same token as a plain hairline, so an empty meter was
+     indistinguishable from a divider under the heading. A track has to look like
+     something can fill it. */
+  height: 0.3125rem;
   border-radius: var(--r-pill);
-  background: var(--line-soft);
+  background: var(--line);
   overflow: hidden;
 }
 

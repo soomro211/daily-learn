@@ -17,7 +17,9 @@ index is not nearly empty.
 **Done when:** the sample build opens in the browser and the look is approved
 before any further screens are built on top of it.
 
-*Built; the gate is still your approval of the look.*
+*Built. Reviewed on a phone, which found the flat white panels and the accent
+shift in the light screenshots — palette direction, still yours to call, so
+those are untouched.*
 
 ## M2 · Topic page
 
@@ -33,6 +35,12 @@ replaying the entrance animation; a back link and a single category label
 replaced a duplicated one; prose holds to one measure; focus moves with a route
 change; and the light palette was corrected where equal HSL lightness turned out
 to mean unequal luminance across the eight category hues.
+
+Found again on a phone: the reading voice stopped halfway down the page — the
+summary was serif, the points and the caveat beneath it were not — the caveat
+label was indented out of the column the other labels form, a field chip showed
+underlined wherever it happened to be a link, and the confirmation animation for
+marking something replayed on every later visit to a page already marked.
 
 **Done when:** a topic opens from the library, reads well on a phone, and
 marking or starring it survives a page reload.
@@ -51,6 +59,12 @@ cycle, which measures 82-87 appearances each and no topic absent more than 26
 days. Each day's pick is now also recorded when first opened, so adding topics
 in M7 cannot move the pick under a day already read. A pick for a future date is
 clamped to today rather than shown.
+
+Found on a phone, and it is the more serious of the two: a reader whose clock
+shifts twice a year could be shown the same topic on two consecutive days, and at
+the seam between two cycles a card was replaced rather than traded, so one topic
+could come up twice in a cycle and another not once at all. Both are now checked
+over fifteen hundred days in twelve zones.
 
 **Done when:** changing the device date shows a different pick, and past days
 can be revisited.
@@ -76,6 +90,14 @@ Found while checking: the unreachable future days were legible only as a smudge
 (2.4–2.5:1), now solved to clear 3:1 in both themes; and the field chips, the most
 tapped control in the app, were 26px tall — inside the AA minimum but small for a
 thumb — so they are 34px.
+
+On a phone the index also showed: the day's counters running together as one
+unbroken line, an empty progress bar reading as a plain rule, every card carrying
+a colour sliver a phone could never finish animating, and a search field small
+enough to make iOS zoom the page and leave it zoomed. Learnt and starred rows now
+say so in words a screen reader can read rather than in colour alone, tapping a
+tab keeps your focus where it was, and a malformed or duplicated topic is dropped
+at startup with a warning instead of emptying the index.
 
 **Done when:** every filter and tab narrows the list correctly against the
 sample data.
@@ -142,5 +164,7 @@ Yours to ask for. Not automatic.
   downstream is built until you approve it.
 - `tests/` is for checking the app, not running it: nothing in `index.html`
   refers to it. `node tests/search-logic.js` exercises the index's search and
-  filters against the real content; `tests/contrast-in-page.js` is loaded into
-  the open page to measure every colour pairing in both themes.
+  filters against the real content; `node tests/day-arithmetic.js` runs the
+  calendar and the daily pick over fifteen hundred days in twelve time zones;
+  `tests/contrast-in-page.js` is loaded into the open page to measure every
+  colour pairing in both themes.
