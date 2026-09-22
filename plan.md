@@ -143,14 +143,44 @@ never blocks reading the result.
 
 Checked against the sample topics, before real content exists.
 
-- [ ] Every screen reachable and clicked through
-- [ ] Layout checked narrow, medium and wide
-- [ ] Both themes checked on every screen
-- [ ] Filters, tabs and search behave correctly
-- [ ] Daily pick, streak and calendar behave correctly
-- [ ] Shuffle returns varied, unlearnt results
-- [ ] Progress kept after reload, and cleared cleanly on request
-- [ ] Console free of errors
+- [x] Every screen reachable and clicked through
+- [x] Layout checked narrow, medium and wide
+- [x] Both themes checked on every screen
+- [x] Filters, tabs and search behave correctly
+- [x] Daily pick, streak and calendar behave correctly
+- [x] Shuffle returns varied, unlearnt results
+- [x] Progress kept after reload, and cleared cleanly on request
+- [x] Console free of errors
+
+Ten routes were opened at 390, 820 and 1320 wide in both themes, and every tab and
+field combination checked against the content rather than against the app's own
+filter: 36 views, each matching on the rows shown, the words beside them, the
+per-card marks, the meter and its bar. Sixteen queries, including the ones that
+should find nothing. The daily thread over seeded histories — a streak ending
+yesterday, one including today, one broken by a gap — plus a pinned day, a future
+day, and three ways of writing a date that is not one. Fifteen rolls, which gave
+thirteen distinct topics before the stack turned over and never once returned a
+marked card. 147 logic checks in `tests/`, 15 states through the contrast audit in
+each theme, and no console message of any kind across 29 route changes.
+
+Found while checking: searching for a topic by a name written without its
+apostrophe found nothing, so "occams razor" missed Occam's razor — the tokenizer
+split on the mark, leaving "occam" and "s" in the text where the query had
+"occams". Apostrophes are now folded away the way accents are, which is what the
+comment above that function always claimed. The roll's out-of-topics message said
+every topic in the field was marked learnt even when the field held no topics at
+all, and offered a button that could never do anything there; an empty field now
+says so and offers only the way wider. And the note's Dismiss was a 17px-tall
+target, the only control in the app under the floor the rest of it keeps to.
+
+Two things were checked and left alone. A field with no topics in it, and the
+index's "Nothing filed there yet" state, cannot be reached from the thirteen
+samples — both were exercised through a harness that loads the real app over
+corrupted content, which is also how the startup guard on malformed rows was
+confirmed. Clearing progress means un-marking topics one by one, or wiping the
+three `dl.*` keys; both were checked and neither leaves residue, but there is no
+in-app control for it, so the checklist's "on request" is satisfied by the browser
+rather than by a button.
 
 **Done when:** the finished app is approved as working, so content is only
 ever written into a shell that won't change underneath it.
@@ -186,6 +216,10 @@ Yours to ask for. Not automatic.
 
 - Progress is stored in the browser on the device it was made, so phone and
   desktop keep separate records, and clearing browser data resets it.
+- Known limit from M6, left as it is because the look is M1's to call: at twice
+  the default text size on a phone-width screen the four status tabs and a long
+  related-topic chip are one-line pills that refuse to wrap, so the page scrolls
+  sideways. Nothing is hidden by it.
 - M1 is the design checkpoint. The look is settled there, and nothing
   downstream is built until you approve it.
 - `tests/` is for checking the app, not running it: nothing in `index.html`

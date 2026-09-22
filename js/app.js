@@ -108,6 +108,13 @@
      diacritics still finds text written with them: the index says "Sèvres" and a
      search for "sevres" has to reach it. Used on both sides of the comparison.
 
+     Apostrophes are dropped outright rather than left in place, because they sit
+     inside a word rather than between two: "Occam's razor" has to be reachable as
+     "occams razor", which is both how most people type it and how the topic's own
+     id is spelled. Splitting on the apostrophe instead — which is what the token
+     list does — leaves "occam" and "s" in the text and "occams" in the query, and
+     the two never meet.
+
      The dropped range is U+0300 to U+036F, the combining diacritical marks that
      NFD decomposition splits away from a precomposed letter. Written as a loop
      over code points rather than a regex character range because the range's
@@ -121,6 +128,7 @@
     for (var i = 0; i < decomposed.length; i += 1) {
       var code = decomposed.charCodeAt(i);
       if (code >= 0x300 && code <= 0x36f) continue;
+      if (code === 0x27 || code === 0x2019 || code === 0x02bc) continue;
       kept += decomposed.charAt(i);
     }
     return kept;
@@ -128,7 +136,8 @@
 
   /* Split on anything that is not a letter or a digit rather than matching the
      whole string. This is what lets "dunning kruger" find a title written with an
-     en dash, and stops "murphy's law" failing on the apostrophe.
+     en dash; the apostrophe case is handled by fold, which removes it before the
+     split rather than treating it as a break.
 
      Single characters are dropped: matching is by substring, so an "s" left over
      from an apostrophe would be satisfied by any word containing one — a
@@ -1347,6 +1356,25 @@
      changes the address; rolling through marked topics is not, because it is a
      one-off concession the address should not pretend to remember. */
   function exhaustedStage() {
+    var filed = 0;
+    TOPICS.forEach(function (topic) {
+      if (!shuffle.cat || topic.category === shuffle.cat) filed += 1;
+    });
+
+    /* A field runs out two different ways, and only one of them is about marks.
+       An empty field is the state M7 leaves a category in until it is written, and
+       there telling the reader every topic in it is marked learnt would be a
+       falsehood — as would offering to roll through the marked ones, which has
+       nothing to roll. Only a chosen field can be empty this way: an index with no
+       topics at all is a different failure, and says so above. */
+    if (shuffle.cat && !filed) {
+      return '<div class="empty"><h2>Nothing filed there yet</h2>' +
+        "<p>" + esc(catLabel(shuffle.cat)) + " has no topics in this build, so there " +
+        "is nothing for the roll to hand over.</p>" +
+        '<a class="btn btn-quiet" href="' + esc(shuffleRoute("")) + '" data-widen>' +
+        "Roll from every field</a></div>";
+    }
+
     var actions = '<button class="btn btn-quiet" type="button" data-include-learnt>' +
       "Roll through the marked ones</button>";
     if (shuffle.cat) {

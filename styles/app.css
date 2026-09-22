@@ -549,7 +549,18 @@ main {
 }
 .prototype-note svg { width: 0.9375rem; height: 0.9375rem; color: var(--accent); }
 .prototype-note strong { color: var(--ink-2); font-weight: 600; }
-.prototype-note button { margin-left: auto; color: var(--ink-3); font-size: var(--t-eyebrow); letter-spacing: 0.08em; text-transform: uppercase; }
+/* Padding rather than a bare word: at 17px tall this was the only control in the
+   app under WCAG's 24px floor for a target, and it is the one thing a reader has
+   to hit to make the note go away. Same treatment as .link-btn. */
+.prototype-note button {
+  margin-left: auto;
+  padding: 0.4375rem 0.5rem;
+  border-radius: var(--r-2);
+  color: var(--ink-3);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
 .storage-note { margin-top: var(--s-3); }
 

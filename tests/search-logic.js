@@ -101,7 +101,7 @@ function includesAll(label, actual, expected) {
 /* Folding and tokenising */
 is("fold lowercases", fold("Dunning–Kruger"), "dunning–kruger");
 is("fold drops accents", fold("Atatürk"), "ataturk");
-is("fold keeps the letters around them", fold("Ş Schrödinger’s"), "s schrodinger\u2019s");
+is("fold removes apostrophes along with accents", fold("Ş Schrödinger’s"), "s schrodingers");
 
 var normalize = String.prototype.normalize;
 delete String.prototype.normalize;
@@ -109,7 +109,7 @@ is("fold degrades to lowercase without normalize", fold("Éclair"), "éclair");
 String.prototype.normalize = normalize;
 
 is("tokens split on a dash", tokensOf("dunning-kruger"), ["dunning", "kruger"]);
-is("tokens split on an apostrophe", tokensOf("Murphy's law"), ["murphy", "law"]);
+is("a possessive stays one word rather than splitting", tokensOf("Murphy's law"), ["murphys", "law"]);
 is("pure punctuation yields no tokens", tokensOf("— – ... !!!"), []);
 is("digits are kept", tokensOf("30 years' war"), ["30", "years", "war"]);
 
@@ -144,6 +144,14 @@ function inField(field) {
 }
 
 is("en dash title found by a hyphen query", has("dunning kruger", "dunning-kruger"), true);
+
+/* An apostrophe sits inside a word rather than between two, so it has to be
+   removed rather than treated as a break: "occams razor" is both how most people
+   type it and how the topic's own id is spelled, and while the mark stays in the
+   text the query splits into "occam" and "s" and never meets it. */
+is("query without the apostrophe finds it", has("occams razor", "occams-razor"), true);
+is("query with the apostrophe finds it", has("occam's razor", "occams-razor"), true);
+is("a possessive in the summary is reachable", has("hardins parable", "tragedy-of-the-commons"), true);
 
 /* Accents: "Sèvres" is the only accented word in the sample content, so it is
    what the folding is actually tested against. */
